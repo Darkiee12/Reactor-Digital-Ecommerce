@@ -1,0 +1,24 @@
+services:
+  server:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    networks: 
+      - my_network
+  
+  pg:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks: 
+      - my_network
+    ports:
+      - "5432:5432"
+
+  

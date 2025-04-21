@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: ecommerce
+  config:
+    activate:
+      on-profile: dev
+
+# === Default settings (applied to all profiles) ===
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    com.myapp.service: INFO
+  file:
+    name: myapp.log
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: 
+    username: 
+    password: 
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: 
+    show-sql: 
+  security:
+    user:
+      name: 
+      password:
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url:
+    username: 
+    password: 
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  security:
+    user:
+      name: 
+      password: 

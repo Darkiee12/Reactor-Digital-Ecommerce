@@ -1,0 +1,24 @@
+{
+    "name": "Preact Dev Container",
+    "dockerComposeFile": ["../../dev.compose.yml"],
+    "service": "frontend",
+    "workspaceFolder": "/workspace/frontend",
+    "shutdownAction": "none",
+    
+    "customizations": {
+        "vscode":{
+            "extensions": [
+                "streetsidesoftware.code-spell-checker",
+                "quicktype.quicktype",
+                "eamodio.gitlens",
+                "austenc.tailwind-docs",
+                "esbenp.prettier-vscode",
+                "ms-azuretools.vscode-docker",
+                "christian-kohler.path-intellisense",
+                "ms-vscode.vscode-typescript-tslint-plugin",
+                "formulahendry.auto-complete-tag",
+                "dbaeumer.vscode-eslint"
+            ]
+        }
+    }
+}
