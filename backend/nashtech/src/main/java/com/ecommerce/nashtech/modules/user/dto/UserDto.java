@@ -11,7 +11,7 @@ public record UserDto(
     @Schema(example="string") String fullName, 
     @Schema(example="string") String email, 
     @Schema(example="string") String gender,
-    @Schema(example="string") String phoneNummber, 
+    @Schema(example="string") String phoneNumber, 
     @Schema(example="string") String address, 
     // @Schema(example="[]") Collection<Role> roles, 
     @Schema(example="string") long createdAt 
