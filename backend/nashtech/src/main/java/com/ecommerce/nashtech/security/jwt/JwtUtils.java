@@ -1,6 +1,6 @@
 package com.ecommerce.nashtech.security.jwt;
 import com.ecommerce.nashtech.security.user.AccountDetails;
-import com.ecommerce.nashtech.utils.rust.Result;
+import com.ecommerce.nashtech.shared.types.Result;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;

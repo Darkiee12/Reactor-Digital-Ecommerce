@@ -6,8 +6,7 @@ import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import com.ecommerce.nashtech.models.Account;
+import com.ecommerce.nashtech.modules.account.dto.FullAccountDto;
 
 import java.util.Collection;
 import java.util.List;
@@ -24,16 +23,16 @@ public class AccountDetails implements UserDetails {
 
     private Collection<GrantedAuthority> authorities;
 
-    public static AccountDetails build(Account account){
-        List<GrantedAuthority> authorities = account.getRoles()
+    public static AccountDetails build(FullAccountDto account){
+        List<GrantedAuthority> authorities = account.roles()
             .stream()
             .map(role -> new SimpleGrantedAuthority(role.getName()))
             .collect(Collectors.toList());
 
         return new AccountDetails(
-            account.getUuid(),
-            account.getUsername(),
-            account.getPassword(),
+            account.uuid(),
+            account.username(),
+            account.password(),
             authorities
         );
     }
