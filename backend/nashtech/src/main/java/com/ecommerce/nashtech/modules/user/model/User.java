@@ -1,43 +1,47 @@
 package com.ecommerce.nashtech.modules.user.model;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
 @Data
 @NoArgsConstructor
 @Table(name = "users")
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class User {
     @Id
     @Column("id")
-    private long id;
+    long id;
 
     @Column("first_name")
-    private String firstName;
+    String firstName;
 
     @Column("last_name")
-    private String lastName;
+    String lastName;
 
     @Column("middle_name")
-    private String middleName;
+    String middleName;
 
     @Column("gender")
-    private String gender;
+    String gender;
 
     @Column("phone_number")
-    private String phoneNumber;
+    String phoneNumber;
 
     @Column("address")
-    private String address;
+    String address;
 
     @Column("created_at")
-    private long createdAt;
+    long createdAt;
 
     @Column("updated_at")
-    private long updatedAt;
+    long updatedAt;
+
+    @Column("is_deleted")
+    boolean deleted;
 
 }

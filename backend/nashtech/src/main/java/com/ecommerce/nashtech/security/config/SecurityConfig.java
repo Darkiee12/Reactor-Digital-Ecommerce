@@ -22,7 +22,7 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import com.ecommerce.nashtech.security.jwt.AuthTokenWebFilter;
 import com.ecommerce.nashtech.security.jwt.JwtAuthEntryPoint;
 import com.ecommerce.nashtech.security.user.AccountDetailsService;
-
+import static org.springframework.security.config.Customizer.withDefaults;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
@@ -37,11 +37,16 @@ public class SecurityConfig {
     JwtAuthEntryPoint authEntryPoint;
     AuthTokenWebFilter authTokenWebFilter;
 
-    
-
-    // static list of endpoints you want to allow through without auth
-    private static final String[] PERMITTED_URLS = { "/api/v1/account/login", "/api/v1/account/register",
-            "/swagger-ui/**", "/v3/api-docs/**" };
+    private static final String[] PERMITTED_URLS = {
+        "/api/v1/account/login", 
+        "/api/v1/account/register",
+        "/api/v1/users",
+        "/swagger-ui.html",
+        "/swagger-ui/**", 
+        "/v3/api-docs/**",
+        "/v3/api-docs", 
+        "/v3/api-docs/swagger-config"
+    };
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -64,6 +69,8 @@ public class SecurityConfig {
                 .requestCache((requestCache) -> NoOpServerRequestCache.getInstance())
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .authenticationManager(authManager)
+                .httpBasic(withDefaults())
+                .formLogin(form -> form.loginPage("/swagger-ui.html"))
                 .authorizeExchange(
                         exchanges -> exchanges.pathMatchers(PERMITTED_URLS).permitAll().anyExchange().authenticated())
                 .addFilterAt(authTokenWebFilter, SecurityWebFiltersOrder.AUTHENTICATION).build();

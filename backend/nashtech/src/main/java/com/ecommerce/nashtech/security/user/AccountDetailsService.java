@@ -1,7 +1,4 @@
 package com.ecommerce.nashtech.security.user;
-
-import com.ecommerce.nashtech.modules.account.dto.FullAccountDto;
-import com.ecommerce.nashtech.modules.account.internal.repository.AccountRepository;
 import com.ecommerce.nashtech.modules.account.service.AccountService;
 import com.ecommerce.nashtech.shared.enums.UserFinder;
 
@@ -22,7 +19,7 @@ public class AccountDetailsService implements ReactiveUserDetailsService {
     AccountService accountService;
     @Override
     public Mono<UserDetails> findByUsername(String username) throws UsernameNotFoundException {
-        return accountService.findFullAccount(UserFinder.ByUsername(username))
+        return accountService.findFullAccount(new UserFinder.ByUsername(username))
             .map(account -> (UserDetails) AccountDetails.build(account))
             .switchIfEmpty(Mono.error(new UsernameNotFoundException("User not found with username: " + username)));
     }

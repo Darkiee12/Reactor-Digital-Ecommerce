@@ -12,7 +12,7 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @AllArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PROTECTED)
-public abstract class BaseError extends Throwable {
+public abstract class BaseError extends RuntimeException {
     String message;
     String code;
 

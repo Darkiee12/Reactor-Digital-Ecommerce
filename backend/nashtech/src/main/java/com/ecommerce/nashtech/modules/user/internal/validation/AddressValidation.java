@@ -60,7 +60,9 @@ public class AddressValidation implements Function<RawAddress, Mono<String>> {
         if (state != null && !state.isBlank()) {
             parts.add(state);
         }
-        parts.add(country);
+        if (country != null && !country.isBlank()) {
+            parts.add(country);
+        }
 
         return String.join(", ", parts);
     }

@@ -12,9 +12,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface RoleRepository extends R2dbcRepository<Role, Long> {
-    Mono<Role> findByName(String name);
-    Mono<Void> deleteByName(String name);
-    Mono<Boolean> existsByName(String name);
+    
+    Mono<Role> findById(long id);
+    Mono<Void> deleteById(long id);
+    Mono<Boolean> existsById(long id);
 
     @Query("""
         SELECT r.* 
@@ -55,9 +56,19 @@ public interface RoleRepository extends R2dbcRepository<Role, Long> {
 
     @Modifying
     @Query("""
-        INSERT INTO account_role (account_id, role_id)
-        VALUES (:accountId, :roleId)
+        INSERT INTO account_role (account_id, role_id, assigned_at)
+        VALUES (:accountId, :roleId, :assignedAt)
         ON CONFLICT (account_id, role_id) DO NOTHING
     """)
-    Mono<Void> updateRole(long roleId, long accountId);    
+    Mono<Void> updateRole(long roleId, long accountId, long assignedAt);  
+    
+    @Query("""
+       INSERT INTO roles (id, name)
+       VALUES (:id, :name)
+       ON CONFLICT (id) DO NOTHING
+       RETURNING *     
+    """)
+    Mono<Role> insertRole(long id, String name);
+
 }
+

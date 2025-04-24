@@ -15,11 +15,17 @@ public sealed abstract class UserError extends BaseError permits
 
     public static final class UserNotFoundError extends UserError {
         private final static String code = "USER_100";
-        private UserNotFoundError(String username) {
-            super("User not found: " + username, code);
+        private UserNotFoundError(Option<String> username) {
+            super(
+                switch (username) {
+                    case Option.Some<String> u -> "User not found: " + u.get();
+                    case Option.None<String> n -> "User not found";
+                },
+                code
+            );
         }
 
-        public static UserNotFoundError build(String username){
+        public static UserNotFoundError build(Option<String> username){
             return new UserNotFoundError(username);
         }
     }

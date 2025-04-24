@@ -62,5 +62,31 @@ public interface UserRepository extends R2dbcRepository<User, Long> {
     """)
     Mono<Boolean> existsByEmail(String email);
 
+    @Query("""
+        UPDATE users
+        SET is_deleted = true
+        WHERE id = :id
+    """)
+    Mono<Void> setDeletedById(long id);
 
+    @Query("""
+        UPDATE users
+        SET is_deleted = true
+        WHERE uuid = :uuid
+    """)
+    Mono<Void> setDeletedByUuid(UUID uuid);
+
+    @Query("""
+        UPDATE users
+        SET is_deleted = true
+        WHERE username = :username
+    """)
+    Mono<Void> setDeletedByUsername(String username);
+
+    @Query("""
+        UPDATE users
+        SET is_deleted = true
+        WHERE email = :email
+    """)
+    Mono<Void> setDeletedByEmail(String email);
 }

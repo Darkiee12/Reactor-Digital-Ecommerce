@@ -5,23 +5,24 @@ import java.util.Map;
 
 import com.ecommerce.nashtech.shared.types.Result;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class JSON {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     public static Result<String, JsonProcessingException> stringify(Object obj) {
         return Result.wrap(() ->
-            objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj)
+            mapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj)
         );
     }
 
     public static <T> Result<T, ? extends Exception> parse(String json, Class<T> clazz) {
         return Result.wrap(() ->
-            objectMapper.readValue(json, clazz)
+            mapper.readValue(json, clazz)
         );
     }
 
@@ -48,6 +49,15 @@ public class JSON {
                 log.error("Error converting to JSON: {}", err.get());
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T deepClone(T object){
+        return Result.wrap(() -> mapper.readValue(mapper.writeValueAsBytes(object), (Class<T>) object.getClass())).unwrap();
+    }
+
+    public static Map<String, Object> mapify(Object obj){
+        return mapper.convertValue(obj, new TypeReference<Map<String, Object>>() {});
     }
 
     

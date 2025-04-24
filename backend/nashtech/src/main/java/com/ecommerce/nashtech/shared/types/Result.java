@@ -1,5 +1,6 @@
 package com.ecommerce.nashtech.shared.types;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -387,5 +388,19 @@ public abstract sealed class Result<T, E> permits Result.Ok, Result.Err {
             case Ok<T, E> ok -> f.apply(ok.get());
             case Err<T, E> err -> null;
         };
+    }
+
+     /**
+     * Inspects the error in the result (if any), and applies the provided side-effect action.
+     * This method is similar to Rust's `inspect_err`.
+     *
+     * @param action the side-effect to perform if the result is an error
+     * @return the current result (either Ok or Err)
+     */
+    public Result<T, E> inspectErr(Consumer<E> action) {
+        if (this instanceof Err<T, E> err) {
+            action.accept(err.get()); // Execute the side-effect for errors
+        }
+        return this; // Return the same result (Ok or Err)
     }
 }

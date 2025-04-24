@@ -1,5 +1,4 @@
 package com.ecommerce.nashtech.modules.user.dto;
-import java.util.Collection;
 import java.util.UUID;
 
 import com.ecommerce.nashtech.shared.json.JSON;
@@ -13,7 +12,6 @@ public record UserDto(
     @Schema(example="string") String gender,
     @Schema(example="string") String phoneNumber, 
     @Schema(example="string") String address, 
-    // @Schema(example="[]") Collection<Role> roles, 
     @Schema(example="string") long createdAt 
 ) {
    

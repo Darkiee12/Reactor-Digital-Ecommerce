@@ -17,6 +17,7 @@ public sealed abstract class AccountError extends BaseError permits
         super(message, code);
     }
 
+
     public static final class DuplicateUsernameError extends AccountError {
         protected DuplicateUsernameError() {
             super("Invalid username", "ACCOUNT_100");

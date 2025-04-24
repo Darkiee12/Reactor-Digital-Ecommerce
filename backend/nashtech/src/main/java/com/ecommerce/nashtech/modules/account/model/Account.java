@@ -33,5 +33,6 @@ public class Account {
     @Column("email")
     String email;
 
-
+    @Column("is_deleted")
+    boolean deleted;
 }

@@ -20,6 +20,7 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -28,9 +29,26 @@ public class AuthTokenWebFilter implements WebFilter {
     private final JwtUtils jwtUtils;
     private final AccountDetailsService accountDetailsService;
 
-    @Override
+    private static final List<String> WHITELIST = List.of(
+        "/api/v1/account/login", 
+        "/api/v1/account/register",
+        "/api/v1/users",
+        "/swagger-ui.html",
+        "/swagger-ui/", 
+        "/swagger-ui/index.html", 
+        "/v3/api-docs",
+        "/v3/api-docs/**", 
+        "/v3/api-docs/swagger-config"
+    );
 
+    @Override
     public @NonNull Mono<Void> filter(@NonNull ServerWebExchange exchange, @NonNull WebFilterChain chain) {
+        String path = exchange.getRequest().getPath().value();
+        
+        if (WHITELIST.stream().anyMatch(path::startsWith)) {
+            return chain.filter(exchange);
+        }
+
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
         if (!StringUtils.hasText(authHeader) || authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -39,20 +57,15 @@ public class AuthTokenWebFilter implements WebFilter {
 
         String token = authHeader.substring(7);
         Result<String, JwtUtils.JwtParserException> res = jwtUtils.getUsernameFromToken(token);
-
-        // use a switch expression to *yield* exactly one Mono<Void>
         Mono<Void> authMono = switch (res) {
         case Result.Ok<String, JwtUtils.JwtParserException> ok -> {
             String username = ok.get();
-            // find the user, then flatMap into the filter chain
             yield accountDetailsService.findByUsername(username).cast(AccountDetails.class).flatMap(details -> {
                 Authentication auth = new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities());
-                // chain.filter(exchange) already returns Mono<Void>
                 return chain.filter(exchange).contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
             });
         }
         case Result.Err<String, JwtUtils.JwtParserException> err -> {
-            // handleJwtError also returns a non‐null Mono<Void>
             yield handleJwtError(exchange.getResponse(), err.get());
         }
         };

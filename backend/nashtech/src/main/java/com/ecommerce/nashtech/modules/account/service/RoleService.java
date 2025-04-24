@@ -1,7 +1,12 @@
 package com.ecommerce.nashtech.modules.account.service;
 
-import org.springframework.stereotype.Service;
+import java.time.Instant;
 
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.reactive.TransactionalOperator;
+
+import com.ecommerce.nashtech.modules.account.error.RoleError;
 import com.ecommerce.nashtech.modules.account.internal.repository.RoleRepository;
 import com.ecommerce.nashtech.modules.account.model.Role;
 import com.ecommerce.nashtech.shared.enums.UserFinder;
@@ -16,26 +21,23 @@ import reactor.core.publisher.Mono;
 @FieldDefaults(makeFinal = true, level = lombok.AccessLevel.PRIVATE)
 public class RoleService implements IRoleService {
     RoleRepository roleRepo;
+    TransactionalOperator txOperator;
+    R2dbcEntityTemplate template;
 
     @Override
-    public Mono<Role> findByName(String name) {
-        return roleRepo.findByName(name)
-            .switchIfEmpty(Mono.error(new RuntimeException("Role not found")));
+    public Mono<Role> findById(long id) {
+        return roleRepo.findById(id);
 
     }
 
     @Override
-    public Mono<Role> create(String roleName) {
-        return roleRepo.existsByName(roleName)
-            .flatMap(exists -> {
-                if (exists) {
-                    return Mono.error(new RuntimeException("Role already exists"));
-                }
-                Role role = new Role();
-                role.setName(roleName);
-                return roleRepo.save(role);
-            });
-    }
+    public Mono<Role> create(Role role) {
+        return roleRepo.existsById(role.getId())
+            .filter(exists -> !exists)
+            .switchIfEmpty(Mono.error(RoleError.DuplicateRoleError.build()))
+            .flatMap(empty -> template.insert(Role.class).using(role))
+            .as(txOperator::transactional);
+    }    
 
     @Override
     public Flux<Role> findByAccount(UserFinder finder) {
@@ -49,11 +51,13 @@ public class RoleService implements IRoleService {
 
     @Override
     public Mono<Void> updateRole(long roleId, long accountId) {
-        return roleRepo.updateRole(roleId, accountId);
+        long millis = Instant.now().toEpochMilli();
+        return roleRepo.updateRole(roleId, accountId, millis);
     }
 
-
-    
-
+    public Mono<Void> assignDefaultRole(long accountId) {
+        var defaultRoleId = USER_ROLE.getId();
+        return updateRole(defaultRoleId, accountId);
+    }
 
 }

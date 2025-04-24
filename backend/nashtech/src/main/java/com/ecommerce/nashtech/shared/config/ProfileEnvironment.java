@@ -1,10 +1,10 @@
 package com.ecommerce.nashtech.shared.config;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
-import org.springframework.stereotype.Component;
 
-@Component
+@Configuration
 public class ProfileEnvironment {
 
     private final Environment environment;

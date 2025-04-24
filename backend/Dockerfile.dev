@@ -1,6 +1,6 @@
 FROM maven:3.9.9-eclipse-temurin-21-alpine
 
-RUN apk add --no-cache curl git zsh zsh-theme-powerlevel10k fzf bash unzip shadow wget
+RUN apk add --no-cache curl git zsh zsh-theme-powerlevel10k fzf bash unzip shadow wget zip
 
 SHELL ["/bin/zsh", "-c"]
 

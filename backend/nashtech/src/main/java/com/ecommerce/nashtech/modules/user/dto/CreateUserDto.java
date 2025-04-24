@@ -14,7 +14,8 @@ public record CreateUserDto(
         @Email(message = "Email should be valid") @NotBlank(message = "Email is required") String email,
         @NotBlank(message = "Password is required") @Size(min = PasswordValidation.MIN_LENGTH, max = PasswordValidation.MAX_LENGTH, message = "Password must be between 8 and 32 characters") String password,
         @NotBlank(message = "First name is required") String firstName,
-        @NotBlank(message = "Last name is required") String lastName, String middleName,
+        @NotBlank(message = "Last name is required") String lastName, 
+        String middleName,
 
         @NotBlank(message = "Gender is required") @Size(min = 1, max = 10) String gender,
 
