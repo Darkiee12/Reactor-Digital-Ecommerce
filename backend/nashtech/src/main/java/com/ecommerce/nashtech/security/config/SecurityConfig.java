@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
@@ -36,16 +37,15 @@ public class SecurityConfig {
     AccountDetailsService userDetailsService;
     JwtAuthEntryPoint authEntryPoint;
     AuthTokenWebFilter authTokenWebFilter;
-
+    private static final String[] SWAGGER_URLS = {
+        "/v3/api-docs/**",
+        "/swagger-ui/**",
+        "/swagger-ui.html",
+        "/webjars/**",
+    };
     private static final String[] PERMITTED_URLS = {
         "/api/v1/account/login", 
         "/api/v1/account/register",
-        "/api/v1/users",
-        "/swagger-ui.html",
-        "/swagger-ui/**", 
-        "/v3/api-docs/**",
-        "/v3/api-docs", 
-        "/v3/api-docs/swagger-config"
     };
 
     @Bean
@@ -64,17 +64,25 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
             ReactiveAuthenticationManager authManager) {
-        return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(authEntryPoint))
+
+        return http
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                // .exceptionHandling(ex -> ex.authenticationEntryPoint(authEntryPoint))
                 .requestCache((requestCache) -> NoOpServerRequestCache.getInstance())
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
-                .authenticationManager(authManager)
-                .httpBasic(withDefaults())
-                .formLogin(form -> form.loginPage("/swagger-ui.html"))
-                .authorizeExchange(
-                        exchanges -> exchanges.pathMatchers(PERMITTED_URLS).permitAll().anyExchange().authenticated())
-                .addFilterAt(authTokenWebFilter, SecurityWebFiltersOrder.AUTHENTICATION).build();
+                // .authenticationManager(authManager)
+                // .formLogin(Customizer.withDefaults())
+                .authorizeExchange(exchanges -> exchanges
+                    // .pathMatchers(PERMITTED_URLS).permitAll()
+                    .pathMatchers(SWAGGER_URLS).permitAll()
+                    .pathMatchers("/api/v1/users/**").permitAll()
+                    // .pathMatchers(SWAGGER_URLS).authenticated() // Trigger login form if not authenticated
+                    // .anyExchange().authenticated()
+                )
+                .addFilterAt(authTokenWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
+                .build();
     }
+
 
     @Bean
     public CorsWebFilter corsWebFilter() {

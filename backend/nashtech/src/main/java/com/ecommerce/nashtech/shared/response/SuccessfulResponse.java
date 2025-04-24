@@ -3,18 +3,18 @@ package com.ecommerce.nashtech.shared.response;
 import java.time.Instant;
 
 import com.ecommerce.nashtech.shared.json.JSON;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import lombok.Data;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
+@Data
 public class SuccessfulResponse<T> {
-    @SuppressWarnings("unused")
     T data;
-    @SuppressWarnings("unused")
     String instance;
-    @SuppressWarnings("unused")
     String timestamp;
 
     private SuccessfulResponse(T data, String instance){

@@ -16,29 +16,29 @@ public interface UserRepository extends R2dbcRepository<User, Long> {
     Mono<User> findById(long id);
 
     @Query("""
-        SELECT * 
+        SELECT u.* 
         FROM users AS u
-        INNER JOIN accounts AS ac
-        ON users.account_id = accounts.id 
-        WHERE accounts.uuid = :uuid
+        INNER JOIN accounts AS a
+        ON u.id = a.id
+        WHERE a.uuid = :uuid
     """)
     Mono<User> findByUuid(UUID uuid);
 
     @Query("""
-        SELECT * 
+        SELECT u.* 
         FROM users AS u
-        INNER JOIN accounts AS ac
-        ON users.account_id = accounts.id 
-        WHERE accounts.username = :username
+        INNER JOIN accounts AS a
+        ON u.id = a.id 
+        WHERE a.username = :username
     """)
     Mono<User> findByEmail(String email);
 
     @Query("""
         SELECT * 
         FROM users AS u
-        INNER JOIN accounts AS ac
-        ON users.account_id = accounts.id 
-        WHERE accounts.email = :email
+        INNER JOIN accounts AS a
+        ON u.id = a.id
+        WHERE a.email = :email
     """)
     Mono<User> findByUsername(String username);
 
@@ -46,8 +46,8 @@ public interface UserRepository extends R2dbcRepository<User, Long> {
         SELECT EXISTS (
           SELECT 1
             FROM users  u
-            JOIN accounts ac ON u.account_id = ac.id
-           WHERE ac.username = :username
+            JOIN accounts a ON u.id = a.id
+           WHERE a.username = :username
         )
     """)
     Mono<Boolean> existsByUsername(String username);
@@ -56,8 +56,8 @@ public interface UserRepository extends R2dbcRepository<User, Long> {
         SELECT EXISTS (
           SELECT 1
             FROM users  u
-            JOIN accounts ac ON u.account_id = ac.id
-           WHERE ac.email = :email
+            JOIN accounts a ON u.id = a.id
+           WHERE a.email = :email
         )
     """)
     Mono<Boolean> existsByEmail(String email);

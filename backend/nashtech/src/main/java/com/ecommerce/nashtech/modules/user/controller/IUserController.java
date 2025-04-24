@@ -3,20 +3,18 @@ package com.ecommerce.nashtech.modules.user.controller;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.ecommerce.nashtech.modules.account.internal.response.LoginResponse;
 import com.ecommerce.nashtech.modules.user.dto.CreateUserDto;
 import com.ecommerce.nashtech.modules.user.dto.UpdateUserDto;
-import com.ecommerce.nashtech.shared.enums.UserFinder;
 import com.ecommerce.nashtech.shared.response.ErrorResponse;
 import com.ecommerce.nashtech.shared.response.SuccessfulResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -43,7 +41,9 @@ public interface IUserController {
     @Operation(summary = "Retrieve user by username", description = "Retrieve user information by username")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "User retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.class))),
-        @ApiResponse(responseCode = "400", description = "Invalid username format", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid username format", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class), examples = {
+            @ExampleObject(name = "InvalidUsername", value = ErrorResponse.Example)
+        })),
         @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
         @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class)))
     })

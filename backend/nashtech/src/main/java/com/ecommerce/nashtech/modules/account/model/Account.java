@@ -35,4 +35,5 @@ public class Account {
 
     @Column("is_deleted")
     boolean deleted;
+    
 }

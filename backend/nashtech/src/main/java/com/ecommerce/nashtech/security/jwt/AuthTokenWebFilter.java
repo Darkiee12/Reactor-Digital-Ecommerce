@@ -28,7 +28,6 @@ public class AuthTokenWebFilter implements WebFilter {
 
     private final JwtUtils jwtUtils;
     private final AccountDetailsService accountDetailsService;
-
     private static final List<String> WHITELIST = List.of(
         "/api/v1/account/login", 
         "/api/v1/account/register",

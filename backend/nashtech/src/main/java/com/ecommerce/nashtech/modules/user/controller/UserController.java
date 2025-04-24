@@ -47,7 +47,7 @@ public class UserController implements IUserController {
         var instance = router.getURI("uuid", uuid);
         var finder = new UserFinder.ByUuid(uuid);
         return userService
-            .find(finder)
+            .findFullUser(finder)
             .map(result -> ResponseEntity.ok(SuccessfulResponse.build(result, instance)))
             .onErrorResume(UserError.class, e -> Mono.just(ResponseEntity.badRequest().body(e.toErrorResponse(instance).toJSON())));
     }
@@ -61,7 +61,7 @@ public class UserController implements IUserController {
         var instance = router.getURI("username", username);
         var finder = new UserFinder.ByUsername(username);
         return userService
-            .find(finder)
+            .findFullUser(finder)
             .map(result -> ResponseEntity.ok(SuccessfulResponse.build(result, instance)))
             .onErrorResume(UserError.class, e -> Mono.just(ResponseEntity.badRequest().body(e.toErrorResponse(instance).toJSON())));
     }
@@ -75,7 +75,7 @@ public class UserController implements IUserController {
         var instance = router.getURI("email", email);
         var finder = new UserFinder.ByEmail(email);
         return userService
-            .find(finder)
+            .findFullUser(finder)
             .map(result -> ResponseEntity.ok(SuccessfulResponse.build(result, instance)))
             .onErrorResume(UserError.class, e -> Mono.just(ResponseEntity.badRequest().body(e.toErrorResponse(instance).toJSON())));
     }

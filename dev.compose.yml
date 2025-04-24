@@ -9,8 +9,8 @@ volumes:
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: ./backend/Dockerfile.dev
     container_name: backend
     networks: 
       - dev_network
@@ -26,8 +26,8 @@ services:
   
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: ./frontend/Dockerfile.dev
     container_name: frontend
     env_file:
       - ./frontend/.env.dev
