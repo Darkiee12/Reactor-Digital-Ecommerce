@@ -9,6 +9,7 @@ import org.springframework.transaction.reactive.TransactionalOperator;
 import com.ecommerce.nashtech.modules.account.error.RoleError;
 import com.ecommerce.nashtech.modules.account.internal.repository.RoleRepository;
 import com.ecommerce.nashtech.modules.account.model.Role;
+import com.ecommerce.nashtech.shared.enums.RoleEnum;
 import com.ecommerce.nashtech.shared.enums.UserFinder;
 
 import lombok.RequiredArgsConstructor;
@@ -33,11 +34,11 @@ public class RoleService implements IRoleService {
     @Override
     public Mono<Role> create(Role role) {
         return roleRepo.existsById(role.getId())
-            .filter(exists -> !exists)
-            .switchIfEmpty(Mono.error(RoleError.DuplicateRoleError.build()))
-            .flatMap(empty -> template.insert(Role.class).using(role))
-            .as(txOperator::transactional);
-    }    
+                .filter(exists -> !exists)
+                .switchIfEmpty(Mono.error(RoleError.DuplicateRoleError.build()))
+                .flatMap(empty -> template.insert(Role.class).using(role))
+                .as(txOperator::transactional);
+    }
 
     @Override
     public Flux<Role> findByAccount(UserFinder finder) {
@@ -55,8 +56,10 @@ public class RoleService implements IRoleService {
         return roleRepo.updateRole(roleId, accountId, millis);
     }
 
+    @Override
     public Mono<Void> assignDefaultRole(long accountId) {
-        var defaultRoleId = USER_ROLE.getId();
+        System.out.println("Assigning default role to account with ID: " + accountId);
+        var defaultRoleId = RoleEnum.UserRole.getRole().getId();
         return updateRole(defaultRoleId, accountId);
     }
 

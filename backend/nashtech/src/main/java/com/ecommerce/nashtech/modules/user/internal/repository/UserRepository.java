@@ -29,7 +29,7 @@ public interface UserRepository extends R2dbcRepository<User, Long> {
         FROM users AS u
         INNER JOIN accounts AS a
         ON u.id = a.id 
-        WHERE a.username = :username
+        WHERE a.email = :email
     """)
     Mono<User> findByEmail(String email);
 
@@ -38,14 +38,14 @@ public interface UserRepository extends R2dbcRepository<User, Long> {
         FROM users AS u
         INNER JOIN accounts AS a
         ON u.id = a.id
-        WHERE a.email = :email
+        WHERE a.username = :username
     """)
     Mono<User> findByUsername(String username);
 
     @Query("""
         SELECT EXISTS (
           SELECT 1
-            FROM users  u
+            FROM users AS u
             JOIN accounts a ON u.id = a.id
            WHERE a.username = :username
         )

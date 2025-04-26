@@ -25,5 +25,7 @@ RUN echo 'export ZSH_THEME="powerlevel10k/powerlevel10k"' > /root/.zshrc && \
 
 RUN chsh root -s /bin/zsh
 
+ENV MAVEN_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+
 ENTRYPOINT ["/usr/local/bin/mvn-entrypoint.sh"]
 CMD ["mvn spring-boot:run -Dspring-boot.run.profiles=dev"]

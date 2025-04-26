@@ -19,6 +19,7 @@ import com.ecommerce.nashtech.shared.types.Option;
 
 import java.time.Instant;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 
@@ -90,17 +91,48 @@ public class UserService implements IUserService {
     }
 
     @Override
+    public Mono<User> unsafeCreate(CreateUserDto dto) {
+        return accountService.create(dto.toAccountDto()).map(account -> {
+            var user = new User();
+            user.setId(account.getId());
+            user.setPhoneNumber(dto.phoneNumber());
+            user.setAddress(dto.address());
+            user.setFirstName(dto.firstName());
+            user.setLastName(dto.lastName());
+            user.setMiddleName(dto.middleName());
+            user.setGender(dto.gender());
+            user.setPhoneNumber(dto.phoneNumber());
+            user.setAddress(dto.address());
+            user.setCreatedAt(Instant.now().toEpochMilli());
+            user.setUpdatedAt(Instant.now().toEpochMilli());
+            user.setDeleted(false);
+            roleService.assignDefaultRole(account.getId());
+            return user;
+        }).flatMap(u -> template.insert(User.class).using(u)).as(txOperator::transactional);
+    }
+
+    @Override
     public Mono<User> update(UserFinder finder, UpdateUserDto updates) {
         return find(finder).flatMap(user -> {
-            var rawPhoneNumber = new RawPhoneNumber(updates.phoneNumber(), updates.phoneNumberRegionCode());
-            Mono<String> phoneNumber = (updates.phoneNumber() != null && updates.phoneNumberRegionCode() != null)
-                    ? phoneValidator.apply(rawPhoneNumber).toMono()
-                    : Mono.just(user.getPhoneNumber());
-
-            var rawAddress = new RawAddress(updates.address(), updates.city(), updates.state(), updates.country());
-            Mono<String> address = (updates.address() != null || updates.city() != null || updates.state() != null
-                    || updates.country() != null) ? addressValidator.apply(rawAddress) : Mono.just(user.getAddress());
-
+            Mono<String> phoneNumber = (
+                updates.phoneNumber() != null && !updates.phoneNumber().isBlank() &&
+                updates.phoneNumberRegionCode() != null && !updates.phoneNumberRegionCode().isBlank()
+            ) ? phoneValidator.apply(new RawPhoneNumber(
+                    updates.phoneNumber(), updates.phoneNumberRegionCode()
+                )).toMono()
+              : Mono.just(user.getPhoneNumber());
+    
+            boolean hasAddressUpdate = Stream.of(
+                updates.address(), updates.city(), updates.state(), updates.country()
+            ).anyMatch(s -> s != null && !(s instanceof String str && str.isBlank()));
+    
+            Mono<String> address = hasAddressUpdate
+                ? addressValidator.apply(new RawAddress(
+                        updates.address(), updates.city(),
+                        updates.state(), updates.country()
+                    ))
+                : Mono.just(user.getAddress());
+    
             return Mono.zip(phoneNumber, address).flatMap(tuple -> {
                 var phoneNum = tuple.getT1();
                 var addr = tuple.getT2();
@@ -109,14 +141,24 @@ public class UserService implements IUserService {
                     u.setAddress(addr);
                     u.setUpdatedAt(Instant.now().toEpochMilli());
                 });
-
             });
-        }).flatMap(user -> userRepo.save(user)).as(txOperator::transactional);
+        }).flatMap(user -> {
+            if (Stream.of(updates.username(), updates.email(), updates.password())
+                      .anyMatch(v -> v != null && !(v instanceof String str && str.isBlank()))) {
+                // Ensure the result of accountService.update() is returned
+                return accountService.update(finder, updates.toUpdateAccountDto())
+                    .then(template.update(user)); // use .then to continue after account update
+            }
+            return template.update(user);
+        }).as(txOperator::transactional);
     }
-
+    
     @Override
     public Mono<Void> delete(UserFinder finder) {
-        find(finder).flatMap(user -> userRepo.setDeletedById(user.getId())).as(txOperator::transactional);
-        return Mono.empty();
+        return find(finder).flatMap(user -> Mono.when(accountService.delete(finder),
+                userRepo.setDeletedById(user.getId()) 
+        )).as(txOperator::transactional) 
+                .then(); 
     }
+
 }

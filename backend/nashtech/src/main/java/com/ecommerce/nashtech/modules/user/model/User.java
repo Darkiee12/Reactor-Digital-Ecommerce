@@ -51,8 +51,8 @@ public class User {
 
     public String getFullName() {
         return Stream.of(firstName, middleName, lastName)
-                 .filter(Objects::nonNull)
-                 .collect(Collectors.joining(" "));
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining(" "));
     }
 
     public String getCreatedAtInRfc1123() {
@@ -63,10 +63,10 @@ public class User {
         return toRfc1123(updatedAt);
     }
 
-    private String toRfc1123(long unixTimeStamp){
+    private String toRfc1123(long unixTimeStamp) {
         return Instant.ofEpochMilli(unixTimeStamp)
-            .atZone(java.time.ZoneId.of("GMT"))
-            .format(java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME);
+                .atZone(java.time.ZoneId.of("GMT"))
+                .format(java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME);
     }
 
 }

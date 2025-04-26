@@ -45,4 +45,3 @@ public class JwtAuthEntryPoint implements ServerAuthenticationEntryPoint {
         return exchange.getResponse().writeWith(Mono.just(buffer));
     }
 }
-

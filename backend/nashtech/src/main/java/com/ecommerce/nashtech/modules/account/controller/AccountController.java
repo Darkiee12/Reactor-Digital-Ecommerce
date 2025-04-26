@@ -2,99 +2,151 @@ package com.ecommerce.nashtech.modules.account.controller;
 
 import com.ecommerce.nashtech.modules.account.dto.SignInDto;
 import com.ecommerce.nashtech.modules.account.error.AccountError;
-import com.ecommerce.nashtech.modules.account.internal.response.LoginResponse;
+import com.ecommerce.nashtech.modules.account.service.AccountService;
 import com.ecommerce.nashtech.security.jwt.JwtUtils;
 import com.ecommerce.nashtech.shared.config.ProfileEnvironment;
+import com.ecommerce.nashtech.shared.enums.UserFinder;
+import com.ecommerce.nashtech.shared.response.SuccessfulResponse;
 import com.ecommerce.nashtech.shared.types.Option;
 import com.ecommerce.nashtech.shared.util.Router;
-
 import jakarta.validation.Valid;
-
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import reactor.core.publisher.Mono;
+import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
-
-import java.time.Duration;
-
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+import java.util.Map;
+
+@Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/api/v1/account")
-@RequiredArgsConstructor()
+@RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 public class AccountController implements IAccountController {
+
     ReactiveAuthenticationManager reactiveAuthenticationManager;
     ProfileEnvironment profileEnvironment;
-    JwtUtils jwtUtils;
-    Router router = new Router("/api/v1/account");
+    AccountService accountService;
+    JwtUtils.Token.AccessTokenProvider accessTokenProvider;
+    JwtUtils.Token.RefreshTokenProvider refreshTokenProvider;
+    Router router = new Router("/api/v1/auth");
 
     @Override
     @PostMapping("/login")
-
     public Mono<ResponseEntity<String>> login(
-        ServerWebExchange exchange,
-        @Valid @RequestBody Mono<SignInDto> dtoMono
-    ) {
-        String instance = router.getURI("/login");
+            ServerWebExchange exchange,
+            @Valid @RequestBody Mono<SignInDto> dtoMono) {
+
+        String instance = router.getURI("login");
 
         return dtoMono
-            .flatMap(dto -> {
-                UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(dto.username(), dto.password());
-
-                return reactiveAuthenticationManager
-                    .authenticate(authToken)
-                    .flatMap(auth -> {
-                        SecurityContextHolder.getContext().setAuthentication(auth);
-                        String jwt = jwtUtils.generateTokenForUser(auth);
-                        ResponseCookie cookie = ResponseCookie.from("token", jwt)
-                                                    .httpOnly(true)
-                                                    .secure(profileEnvironment.isProduction())
-                                                    .path("/")
-                                                    .sameSite("None")
-                                                    .maxAge(Duration.ofMillis(jwtUtils.getExpirationMs()))
-                                                    .build();
-                        String clientIp = Option
-                                            .some(exchange.getRequest().getRemoteAddress())
-                                            .map(addr -> addr.getAddress().getHostAddress())
-                                            .unwrapOr("unknown");
-                        exchange.getResponse().addCookie(cookie);
-                        exchange.getResponse().getHeaders().add("X-Client-IP", clientIp);
-
-                        return Mono.just(ResponseEntity.ok(
-                                    LoginResponse.build(jwt, jwt)));
-                    });
-            })
-            .onErrorResume(WebExchangeBindException.class, ex -> {
-                return Mono.just(ResponseEntity
-                                    .badRequest()
-                                    .body("Invalid input data"));
-            })
-            .onErrorResume(AuthenticationException.class, ex -> {
-                return Mono.just(ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(AccountError
-                            .WrongCredentialsError
-                            .build()
-                            .toErrorResponse(instance)
-                            .toJSON()));
-            });
+                .flatMap(dto -> authenticate(dto))
+                .flatMap(auth -> generateLoginResponse(exchange, auth, instance))
+                .onErrorResume(WebExchangeBindException.class, ex -> badRequestResponse())
+                .onErrorResume(AuthenticationException.class, ex -> unauthorizedResponse(instance));
     }
 
+    @GetMapping("/refresh")
+    public Mono<ResponseEntity<String>> renewAccessToken(ServerWebExchange exchange) {
+        String instance = router.getURI("refresh");
 
+        MultiValueMap<String, HttpCookie> cookies = exchange.getRequest().getCookies();
+        Option<HttpCookie> refreshTokenCookie = Option.fromNullable(cookies.getFirst("refreshToken"));
+        return switch (refreshTokenCookie) {
+            case Option.Some<HttpCookie> someCookie -> {
+                var cookie = someCookie.get();
+                String refreshToken = cookie.getValue();
+                yield refreshTokenProvider
+                        .getUuidFromToken(refreshToken)
+                        .map(uuid -> new UserFinder.ByUuid(uuid))
+                        .flatMap(finder -> accountService.findFullAccount(finder))
+                        .map(fullAccount -> accessTokenProvider.generateToken(fullAccount))
+                        .map(accessJwt -> Map.of("accessToken", accessJwt))
+                        .map(accessToken -> ResponseEntity.ok(SuccessfulResponse.build(accessToken, instance)))
+                        .onErrorResume(AccountError.InvalidTokenError.class,
+                                e -> Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                        .body(e.getMessage())));
+
+            }
+            case Option.None<HttpCookie> none -> {
+                yield Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("No refresh token found. Please log in to obtain a new one."));
+            }
+        };
+    }
+
+    // ==== Private helper methods ====
+
+    private Mono<UsernamePasswordAuthenticationToken> createAuthToken(SignInDto dto) {
+        return Mono.just(new UsernamePasswordAuthenticationToken(dto.username(), dto.password()));
+    }
+
+    private Mono<Authentication> authenticate(SignInDto dto) {
+        return createAuthToken(dto)
+                .flatMap(reactiveAuthenticationManager::authenticate)
+                .doOnNext(auth -> SecurityContextHolder.getContext().setAuthentication(auth));
+    }
+
+    private Mono<ResponseEntity<String>> generateLoginResponse(ServerWebExchange exchange, Authentication auth,
+            String instance) {
+        String accessJwt = accessTokenProvider.generateToken(auth);
+        String refreshJwt = refreshTokenProvider.generateToken(auth);
+
+        ResponseCookie cookie = createRefreshCookie(refreshJwt);
+
+        exchange.getResponse().addCookie(cookie);
+        String clientIp = extractClientIp(exchange);
+        exchange.getResponse().getHeaders().add("X-Client-IP", clientIp);
+
+        Map<String, String> accessToken = Map.of("accessToken", accessJwt);
+        return Mono.just(ResponseEntity.ok(SuccessfulResponse.build(accessToken, instance)));
+    }
+
+    private ResponseCookie createRefreshCookie(String refreshToken) {
+        return ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(profileEnvironment.isProduction())
+                .path("/")
+                .sameSite("None")
+                .maxAge(Duration.ofMillis(accessTokenProvider.getExpirationMs()))
+                .build();
+    }
+
+    private String extractClientIp(ServerWebExchange exchange) {
+        return Option
+                .some(exchange.getRequest().getRemoteAddress())
+                .map(addr -> addr.getAddress().getHostAddress())
+                .unwrapOr("unknown");
+    }
+
+    private Mono<ResponseEntity<String>> badRequestResponse() {
+        return Mono.just(ResponseEntity
+                .badRequest()
+                .body("Invalid input data"));
+    }
+
+    private Mono<ResponseEntity<String>> unauthorizedResponse(String instance) {
+        return Mono.just(ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(AccountError.WrongCredentialsError
+                        .build()
+                        .toErrorResponse(instance)
+                        .toJSON()));
+    }
 }

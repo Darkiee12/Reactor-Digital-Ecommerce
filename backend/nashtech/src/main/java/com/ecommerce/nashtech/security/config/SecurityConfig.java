@@ -19,42 +19,35 @@ import org.springframework.security.web.server.savedrequest.NoOpServerRequestCac
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
-
 import com.ecommerce.nashtech.security.jwt.AuthTokenWebFilter;
 import com.ecommerce.nashtech.security.jwt.JwtAuthEntryPoint;
 import com.ecommerce.nashtech.security.user.AccountDetailsService;
-import static org.springframework.security.config.Customizer.withDefaults;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Configuration
 @EnableWebFluxSecurity
-@EnableMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = lombok.AccessLevel.PRIVATE)
 public class SecurityConfig {
-
     AccountDetailsService userDetailsService;
     JwtAuthEntryPoint authEntryPoint;
     AuthTokenWebFilter authTokenWebFilter;
-    private static final String[] SWAGGER_URLS = {
-        "/v3/api-docs/**",
-        "/swagger-ui/**",
-        "/swagger-ui.html",
-        "/webjars/**",
-    };
-    private static final String[] PERMITTED_URLS = {
-        "/api/v1/account/login", 
-        "/api/v1/account/register",
-    };
+    ExchangeConfig exchangeConfig;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(10);
     }
 
+    public String[] getPermittedUrls() {
+        return exchangeConfig.getPermittedUrls();
+    }
+
     @Bean
-    public ReactiveAuthenticationManager reactiveAuthenticationManager(PasswordEncoder passwordEncoder) {
+    public ReactiveAuthenticationManager reactiveAuthenticationManager(
+            PasswordEncoder passwordEncoder) {
         UserDetailsRepositoryReactiveAuthenticationManager authManager = new UserDetailsRepositoryReactiveAuthenticationManager(
                 userDetailsService);
         authManager.setPasswordEncoder(passwordEncoder);
@@ -65,24 +58,19 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
             ReactiveAuthenticationManager authManager) {
 
-        return http
-                .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                // .exceptionHandling(ex -> ex.authenticationEntryPoint(authEntryPoint))
-                .requestCache((requestCache) -> NoOpServerRequestCache.getInstance())
-                .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
-                // .authenticationManager(authManager)
-                // .formLogin(Customizer.withDefaults())
-                .authorizeExchange(exchanges -> exchanges
-                    // .pathMatchers(PERMITTED_URLS).permitAll()
-                    .pathMatchers(SWAGGER_URLS).permitAll()
-                    .pathMatchers("/api/v1/users/**").permitAll()
-                    // .pathMatchers(SWAGGER_URLS).authenticated() // Trigger login form if not authenticated
-                    // .anyExchange().authenticated()
-                )
-                .addFilterAt(authTokenWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
+        return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(authEntryPoint))
+                .requestCache((requestCache) -> NoOpServerRequestCache
+                        .getInstance())
+                .securityContextRepository(
+                        NoOpServerSecurityContextRepository.getInstance())
+                .authenticationManager(authManager)
+                .formLogin(Customizer.withDefaults())
+                .authorizeExchange(exchangeConfig::accept)
+                .addFilterAt(authTokenWebFilter,
+                        SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
-
 
     @Bean
     public CorsWebFilter corsWebFilter() {

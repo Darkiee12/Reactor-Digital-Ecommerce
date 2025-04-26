@@ -23,6 +23,7 @@ services:
       - pg
     ports:
       - "8080:8080"
+      - "5005:5005"
   
   frontend:
     build:
@@ -47,5 +48,3 @@ services:
       - dev_network
     ports:
       - "5432:5432"
-
-  

@@ -4,14 +4,6 @@
     "service": "backend",
     "workspaceFolder": "/workspace/backend",
     "shutdownAction": "none",
-    // "features": {
-    //     "ghcr.io/devcontainers/features/java:1": {
-    //         "version": "none",
-    //         "installMaven": "true",
-    //         "mavenVersion": "3.8.6",
-    //         "installGradle": "false"
-    //     }
-    // },
     "customizations": {
         "vscode": {
             "extensions": [
@@ -45,6 +37,8 @@
                 }
             }
         }
+        
     },
+    "forwardPorts": [8080, 5005],
     "postCreateCommand": "mvn -v"
 }

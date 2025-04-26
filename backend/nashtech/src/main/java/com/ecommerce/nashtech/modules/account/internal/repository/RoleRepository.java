@@ -56,9 +56,9 @@ public interface RoleRepository extends R2dbcRepository<Role, Long> {
 
     @Modifying
     @Query("""
-        INSERT INTO account_role (account_id, role_id, assigned_at)
-        VALUES (:accountId, :roleId, :assignedAt)
-        ON CONFLICT (account_id, role_id) DO NOTHING
+        INSERT INTO account_role (role_id, account_id, assigned_at)
+        VALUES (:roleId, :accountId, :assignedAt)
+        ON CONFLICT (role_id, account_id) DO NOTHING
     """)
     Mono<Void> updateRole(long roleId, long accountId, long assignedAt);  
     
