@@ -54,6 +54,14 @@ auth:
     expirationInMillis: ${SPRING_REFRESH_JWT_EXPIRATION_IN_MILLIS}
     jwtSecret: ${SPRING_REFRESH_JWT_SECRET}
 
+minio:
+  url: ${MINIO_URL}
+  access:
+    name: ${MINIO_ACCESS_KEY}
+    secret: ${MINIO_SECRET_KEY}
+  bucket:
+    name: ${MINIO_BUCKET_NAME}
+
 
 ---
 
