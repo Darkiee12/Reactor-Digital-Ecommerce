@@ -6,7 +6,9 @@
 *.tmp
 *.bak
 *.env
-.env.*
+.env.dev
+.env.prod
+.vscode
 
 # === Frontend: Vite + Preact + Tailwind ===
 /frontend/node_modules/
@@ -47,13 +49,9 @@
 /backend/pom.xml.next
 /backend/release.properties
 /backend/buildNumber.properties
-/backend/sample.txt
+/backend/sample.sql
 /backend/accounts.csv
-<<<<<<< HEAD
 /backend/nashtech/.mvn/*
-=======
-/backend/nashtech/.mvn/
->>>>>>> 12ba654 (add jwt)
 /backend/nashtech/src/main/resources/application.yaml
 rest.http
 
