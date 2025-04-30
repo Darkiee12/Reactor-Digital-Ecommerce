@@ -43,10 +43,10 @@ public class UserService implements IUserService {
     @Override
     public Mono<User> find(UserFinder finder) {
         var user = switch (finder) {
-        case UserFinder.ById id -> userRepo.findById(id.id());
-        case UserFinder.ByUsername username -> userRepo.findByUsername(username.username());
-        case UserFinder.ByEmail email -> userRepo.findByEmail(email.email());
-        case UserFinder.ByUuid uuid -> userRepo.findByUuid(uuid.uuid());
+            case UserFinder.ById id -> userRepo.findById(id.id());
+            case UserFinder.ByUsername username -> userRepo.findByUsername(username.username());
+            case UserFinder.ByEmail email -> userRepo.findByEmail(email.email());
+            case UserFinder.ByUuid uuid -> userRepo.findByUuid(uuid.uuid());
         };
         return user.filter(u -> !u.isDeleted())
                 .switchIfEmpty(Mono.error(UserError.UserNotFoundError.build(Option.none())));
@@ -114,25 +114,22 @@ public class UserService implements IUserService {
     @Override
     public Mono<User> update(UserFinder finder, UpdateUserDto updates) {
         return find(finder).flatMap(user -> {
-            Mono<String> phoneNumber = (
-                updates.phoneNumber() != null && !updates.phoneNumber().isBlank() &&
-                updates.phoneNumberRegionCode() != null && !updates.phoneNumberRegionCode().isBlank()
-            ) ? phoneValidator.apply(new RawPhoneNumber(
-                    updates.phoneNumber(), updates.phoneNumberRegionCode()
-                )).toMono()
-              : Mono.just(user.getPhoneNumber());
-    
+            Mono<String> phoneNumber = (updates.phoneNumber() != null && !updates.phoneNumber().isBlank() &&
+                    updates.phoneNumberRegionCode() != null && !updates.phoneNumberRegionCode().isBlank())
+                            ? phoneValidator.apply(new RawPhoneNumber(
+                                    updates.phoneNumber(), updates.phoneNumberRegionCode())).toMono()
+                            : Mono.just(user.getPhoneNumber());
+
             boolean hasAddressUpdate = Stream.of(
-                updates.address(), updates.city(), updates.state(), updates.country()
-            ).anyMatch(s -> s != null && !(s instanceof String str && str.isBlank()));
-    
+                    updates.address(), updates.city(), updates.state(), updates.country())
+                    .anyMatch(s -> s != null && !(s instanceof String str && str.isBlank()));
+
             Mono<String> address = hasAddressUpdate
-                ? addressValidator.apply(new RawAddress(
-                        updates.address(), updates.city(),
-                        updates.state(), updates.country()
-                    ))
-                : Mono.just(user.getAddress());
-    
+                    ? addressValidator.apply(new RawAddress(
+                            updates.address(), updates.city(),
+                            updates.state(), updates.country()))
+                    : Mono.just(user.getAddress());
+
             return Mono.zip(phoneNumber, address).flatMap(tuple -> {
                 var phoneNum = tuple.getT1();
                 var addr = tuple.getT2();
@@ -144,21 +141,20 @@ public class UserService implements IUserService {
             });
         }).flatMap(user -> {
             if (Stream.of(updates.username(), updates.email(), updates.password())
-                      .anyMatch(v -> v != null && !(v instanceof String str && str.isBlank()))) {
+                    .anyMatch(v -> v != null && !(v instanceof String str && str.isBlank()))) {
                 // Ensure the result of accountService.update() is returned
                 return accountService.update(finder, updates.toUpdateAccountDto())
-                    .then(template.update(user)); // use .then to continue after account update
+                        .then(template.update(user)); // use .then to continue after account update
             }
             return template.update(user);
         }).as(txOperator::transactional);
     }
-    
+
     @Override
     public Mono<Void> delete(UserFinder finder) {
         return find(finder).flatMap(user -> Mono.when(accountService.delete(finder),
-                userRepo.setDeletedById(user.getId()) 
-        )).as(txOperator::transactional) 
-                .then(); 
+                userRepo.setDeletedById(user.getId()))).as(txOperator::transactional)
+                .then();
     }
 
 }

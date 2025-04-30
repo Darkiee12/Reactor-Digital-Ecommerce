@@ -23,13 +23,11 @@ public class ExchangeConfig implements Consumer<AuthorizeExchangeSpec> {
     Router router = new Router("/api/v1");
     String[] SWAGGER_URLS = { "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
             "/webjars/**", };
-    String[] PERMITTED_URLS = { "/api/v1/account/login", "/api/v1/users" };
+    String[] PERMITTED_URLS = { "/api/v1/auth/login", };
 
     @Override
     public void accept(AuthorizeExchangeSpec exchange) {
         exchange
-                .pathMatchers(SWAGGER_URLS).permitAll()
-                .pathMatchers(PERMITTED_URLS).permitAll()
                 .pathMatchers(HttpMethod.PATCH, router.getURI("users", "username", "{username}"))
                 .access((authentication, context) -> CommonAuthorizationDecision.User.build(authentication, context)
                         .byUsername())
@@ -48,8 +46,7 @@ public class ExchangeConfig implements Consumer<AuthorizeExchangeSpec> {
                 .pathMatchers(HttpMethod.DELETE, router.getURI("users", "email", "{email}"))
                 .access((authentication, context) -> CommonAuthorizationDecision.User.build(authentication, context)
                         .byEmail())
-
-                .anyExchange().authenticated();
+                .anyExchange().permitAll();
     }
 
     public String[] getPermittedUrls() {
@@ -74,7 +71,10 @@ sealed interface CommonAuthorizationDecision permits CommonAuthorizationDecision
         private Mono<Boolean> isAdmin() {
             return authentication.map(auth -> auth.getAuthorities().stream()
                     .anyMatch(
-                            grantedAuthority -> RoleEnum.AdminRole.getName().equals(grantedAuthority.getAuthority())));
+                            grantedAuthority -> {
+                                System.out.println("grantedAuthority: " + grantedAuthority.getAuthority());
+                                return RoleEnum.AdminRole.getName().equals(grantedAuthority.getAuthority());
+                            }));
         }
 
         private String getPathVariable(String path) {

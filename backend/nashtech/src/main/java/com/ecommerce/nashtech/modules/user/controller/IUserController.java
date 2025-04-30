@@ -13,7 +13,6 @@ import com.ecommerce.nashtech.shared.response.SuccessfulResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -25,10 +24,10 @@ public interface IUserController {
 
     @Operation(summary = "Retrieve user by UUID", description = "Retrieve user information by UUID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid UUID format", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class)))
+            @ApiResponse(responseCode = "200", description = "User retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.WithData.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid UUID format", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
     public Mono<ResponseEntity<String>> getUserByUuid(
             ServerWebExchange exchange,
@@ -36,12 +35,11 @@ public interface IUserController {
 
     @Operation(summary = "Retrieve user by username", description = "Retrieve user information by username")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid username format", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class), examples = {
-                    @ExampleObject(name = "InvalidUsername", value = ErrorResponse.Example)
+            @ApiResponse(responseCode = "200", description = "User retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.WithData.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid username format", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class), examples = {
             })),
-            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class)))
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
     public Mono<ResponseEntity<String>> getUserByUsername(
             ServerWebExchange exchange,
@@ -49,22 +47,31 @@ public interface IUserController {
 
     @Operation(summary = "Retrieve user by email", description = "Retrieve user information by email")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid email format", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class)))
+            @ApiResponse(responseCode = "200", description = "User retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.WithData.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid email format", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
     public Mono<ResponseEntity<String>> getUserByEmail(
             ServerWebExchange exchange,
             @Parameter(description = "Email of the user to retrieve", required = true, schema = @Schema(type = "string", format = "email", example = "user@email.com")) String email);
 
+    @Operation(summary = "Retrieve current user information", description = "Retrieve current user information")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Current user retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.WithData.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    Mono<ResponseEntity<String>> getCurrentUser(
+            ServerWebExchange exchange);
+
     @Operation(summary = "Create a new user", description = "Create a new user")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Create successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "422", description = "Unprocessable entity", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class)))
+            @ApiResponse(responseCode = "200", description = "Create successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.WithData.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "Unprocessable entity", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
     public Mono<ResponseEntity<String>> createUser(
             ServerWebExchange exchange,
@@ -72,11 +79,11 @@ public interface IUserController {
 
     @Operation(summary = "Update user information", description = "Update user information")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Update successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "422", description = "Unprocessable entity", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class)))
+            @ApiResponse(responseCode = "200", description = "Update successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.WithData.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "Unprocessable entity", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
     public Mono<ResponseEntity<String>> updateUserByUuid(
             ServerWebExchange exchange,
@@ -84,6 +91,13 @@ public interface IUserController {
             @Parameter(description = "User information to update", required = true, schema = @Schema(implementation = UpdateUserDto.class)) UpdateUserDto dto);
 
     @Operation(summary = "Update user information", description = "Update user information")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Update successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.WithData.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "Unprocessable entity", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public Mono<ResponseEntity<String>> updateUserByUsername(
             ServerWebExchange exchange,
             @Parameter(description = "Username of the user to update", required = true, schema = @Schema(type = "string", example = "username")) String username,
@@ -91,11 +105,11 @@ public interface IUserController {
 
     @Operation(summary = "Update user by email", description = "Update user information by email")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Update successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "422", description = "Unprocessable entity", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class)))
+            @ApiResponse(responseCode = "200", description = "Update successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.WithData.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "Unprocessable entity", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
     public Mono<ResponseEntity<String>> updateUserByEmail(
             ServerWebExchange exchange,
@@ -104,10 +118,10 @@ public interface IUserController {
 
     @Operation(summary = "Delete user by UUID", description = "Delete user by UUID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User deleted successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid UUID format", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class)))
+            @ApiResponse(responseCode = "200", description = "User deleted successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.WithMessage.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid UUID format", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
     public Mono<ResponseEntity<String>> deleteUserByUuid(
             ServerWebExchange exchange,
@@ -115,10 +129,10 @@ public interface IUserController {
 
     @Operation(summary = "Delete user by username", description = "Delete user by username")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User deleted successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid username format", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class)))
+            @ApiResponse(responseCode = "200", description = "User deleted successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.WithMessage.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid username format", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
     public Mono<ResponseEntity<String>> deleteUserByUsername(
             ServerWebExchange exchange,
@@ -126,13 +140,12 @@ public interface IUserController {
 
     @Operation(summary = "Delete user by email", description = "Delete user by email")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User deleted successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid email format", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.ErrorResponseObject.class)))
+            @ApiResponse(responseCode = "200", description = "User deleted successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.WithMessage.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid email format", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
     public Mono<ResponseEntity<String>> deleteUserByEmail(
             ServerWebExchange exchange,
             @Parameter(description = "Email of the user to delete", required = true, schema = @Schema(type = "string", format = "email")) String email);
-
 }

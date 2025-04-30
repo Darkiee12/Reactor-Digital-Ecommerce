@@ -4,7 +4,6 @@ import java.util.UUID;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,15 +15,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 
+import com.ecommerce.nashtech.modules.account.error.AccountError;
 import com.ecommerce.nashtech.modules.user.dto.CreateUserDto;
 import com.ecommerce.nashtech.modules.user.dto.UpdateUserDto;
 import com.ecommerce.nashtech.modules.user.error.UserError;
 import com.ecommerce.nashtech.modules.user.service.UserService;
+import com.ecommerce.nashtech.security.jwt.JwtUtils;
 import com.ecommerce.nashtech.shared.enums.UserFinder;
-import com.ecommerce.nashtech.shared.json.JSON;
+import com.ecommerce.nashtech.shared.response.ErrorResponse;
 import com.ecommerce.nashtech.shared.response.SuccessfulResponse;
+import com.ecommerce.nashtech.shared.types.Option;
 import com.ecommerce.nashtech.shared.util.Router;
 
+import io.swagger.v3.oas.models.servers.Server;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -34,10 +37,11 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 @RequestMapping("/api/v1/users")
-@CrossOrigin(origins = "*", maxAge = 3600)
+// @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 public class UserController implements IUserController {
     UserService userService;
+    JwtUtils.Token.AccessTokenProvider accessTokenProvider;
     Router router = new Router("/api/v1/user");
 
     @Override
@@ -49,10 +53,13 @@ public class UserController implements IUserController {
         var finder = new UserFinder.ByUuid(uuid);
         return userService
                 .findFullUser(finder)
-                .map(result -> ResponseEntity.ok(SuccessfulResponse.build(result, instance)))
+                .map(result -> SuccessfulResponse.WithData.builder()
+                        .item(result)
+                        .instance(instance)
+                        .build()
+                        .asResponse())
                 .onErrorResume(UserError.class,
-                        e -> Mono.just(ResponseEntity.badRequest()
-                                .body(e.toErrorResponse(instance).toJSON())));
+                        e -> ErrorResponse.build(e, instance).asMonoResponse());
     }
 
     @Override
@@ -64,10 +71,38 @@ public class UserController implements IUserController {
         var finder = new UserFinder.ByUsername(username);
         return userService
                 .findFullUser(finder)
-                .map(result -> ResponseEntity.ok(SuccessfulResponse.build(result, instance)))
+                .map(result -> SuccessfulResponse.WithData.builder()
+                        .item(result)
+                        .instance(instance)
+                        .build()
+                        .asResponse())
                 .onErrorResume(UserError.class,
-                        e -> Mono.just(ResponseEntity.badRequest()
-                                .body(e.toErrorResponse(instance).toJSON())));
+                        e -> ErrorResponse.build(e, instance).asMonoResponse());
+    }
+
+    @GetMapping(value = "/me")
+    public Mono<ResponseEntity<String>> getCurrentUser(
+            ServerWebExchange exchange) {
+        var instance = router.getURI("me");
+
+        var token = exchange.getRequest().getHeaders().getFirst("Authorization");
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ErrorResponse
+                    .build(AccountError.UnauthorizedError.build(), instance)
+                    .asMonoResponse();
+        }
+        var jwt = token.substring(7);
+        return accessTokenProvider.getUsernameFromToken(jwt)
+                .map(username -> new UserFinder.ByUsername(username))
+                .flatMap(finder -> userService.findFullUser(finder))
+                .map(result -> SuccessfulResponse.WithData.builder()
+                        .item(result)
+                        .instance(instance)
+                        .build()
+                        .asResponse())
+                .onErrorResume(UserError.class,
+                        e -> ErrorResponse.build(e, instance).asMonoResponse());
+
     }
 
     @Override
@@ -79,10 +114,13 @@ public class UserController implements IUserController {
         var finder = new UserFinder.ByEmail(email);
         return userService
                 .findFullUser(finder)
-                .map(result -> ResponseEntity.ok(SuccessfulResponse.build(result, instance)))
+                .map(result -> SuccessfulResponse.WithData.builder()
+                        .item(result)
+                        .instance(instance)
+                        .build()
+                        .asResponse())
                 .onErrorResume(UserError.class,
-                        e -> Mono.just(ResponseEntity.badRequest()
-                                .body(e.toErrorResponse(instance).toJSON())));
+                        e -> ErrorResponse.build(e, instance).asMonoResponse());
     }
 
     @Override
@@ -93,13 +131,15 @@ public class UserController implements IUserController {
         var instance = router.getURI("create");
         return userService
                 .create(dto)
-                .map(result -> ResponseEntity.ok(SuccessfulResponse.build(result, instance)))
+                .map(result -> SuccessfulResponse.WithData.builder()
+                        .item(result)
+                        .instance(instance)
+                        .build()
+                        .asResponse())
                 .onErrorResume(UserError.class,
-                        e -> Mono.just(ResponseEntity.badRequest()
-                                .body(e.toErrorResponse(instance).toJSON())));
+                        e -> ErrorResponse.build(e, instance).asMonoResponse());
     }
 
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN') or hasAnyAuthority('ROLE_USER') and authentication.principal.uuid = #uuid")
     @Override
     @PatchMapping("/uuid/{uuid}")
     public Mono<ResponseEntity<String>> updateUserByUuid(
@@ -110,14 +150,15 @@ public class UserController implements IUserController {
         var finder = new UserFinder.ByUuid(uuid);
         return userService
                 .update(finder, dto)
-                .map(result -> ResponseEntity.ok(SuccessfulResponse.build(result, instance)))
+                .map(result -> SuccessfulResponse.WithData.builder()
+                        .item(result)
+                        .instance(instance)
+                        .build()
+                        .asResponse())
                 .onErrorResume(UserError.class,
-                        e -> Mono.just(ResponseEntity.badRequest()
-                                .body(e.toErrorResponse(instance).toJSON())));
+                        e -> ErrorResponse.build(e, instance).asMonoResponse());
     }
 
-    // @PreAuthorize("hasAuthority('ROLE_USER')")
-    // @Secured({ "ROLE_USER" })
     @Override
     @PatchMapping(value = "/username/{username}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<String>> updateUserByUsername(
@@ -128,13 +169,15 @@ public class UserController implements IUserController {
         var finder = new UserFinder.ByUsername(username);
         return userService
                 .update(finder, dto)
-                .map(result -> ResponseEntity.ok(SuccessfulResponse.build(result, instance)))
+                .map(result -> SuccessfulResponse.WithData.builder()
+                        .item(result)
+                        .instance(instance)
+                        .build()
+                        .asResponse())
                 .onErrorResume(UserError.class,
-                        e -> Mono.just(ResponseEntity.badRequest()
-                                .body(e.toErrorResponse(instance).toJSON())));
+                        e -> ErrorResponse.build(e, instance).asMonoResponse());
     }
 
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN') or hasAnyAuthority('ROLE_USER') and authentication.principal.email = #email  ")
     @Override
     @PatchMapping(value = "/email/{email}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<String>> updateUserByEmail(
@@ -145,13 +188,15 @@ public class UserController implements IUserController {
         var finder = new UserFinder.ByEmail(email);
         return userService
                 .update(finder, dto)
-                .map(result -> ResponseEntity.ok(SuccessfulResponse.build(result, instance)))
+                .map(result -> SuccessfulResponse.WithData.builder()
+                        .item(result)
+                        .instance(instance)
+                        .build()
+                        .asResponse())
                 .onErrorResume(UserError.class,
-                        e -> Mono.just(ResponseEntity.badRequest()
-                                .body(e.toErrorResponse(instance).toJSON())));
+                        e -> ErrorResponse.build(e, instance).asMonoResponse());
     }
 
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN') or hasAnyAuthority('ROLE_USER') and authentication.principal.uuid = #uuid")
     @Override
     @DeleteMapping(value = "/uuid/{uuid}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<String>> deleteUserByUuid(
@@ -161,13 +206,15 @@ public class UserController implements IUserController {
         var finder = new UserFinder.ByUuid(uuid);
         return userService
                 .delete(finder)
-                .map(result -> ResponseEntity.ok(SuccessfulResponse.build(result, instance)))
+                .map(result -> SuccessfulResponse.WithMessage.builder()
+                        .message("User deleted successfully")
+                        .instance(instance)
+                        .build()
+                        .asResponse())
                 .onErrorResume(UserError.class,
-                        e -> Mono.just(ResponseEntity.badRequest()
-                                .body(e.toErrorResponse(instance).toJSON())));
+                        e -> ErrorResponse.build(e, instance).asMonoResponse());
     }
 
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN') or hasAnyAuthority('ROLE_USER') and authentication.principal.username = #username")
     @Override
     @DeleteMapping("/username/{username}")
     public Mono<ResponseEntity<String>> deleteUserByUsername(
@@ -177,13 +224,15 @@ public class UserController implements IUserController {
         var finder = new UserFinder.ByUsername(username);
         return userService
                 .delete(finder)
-                .map(result -> ResponseEntity.ok(SuccessfulResponse.build(result, instance)))
+                .map(result -> SuccessfulResponse.WithMessage.builder()
+                        .message("User deleted successfully")
+                        .instance(instance)
+                        .build()
+                        .asResponse())
                 .onErrorResume(UserError.class,
-                        e -> Mono.just(ResponseEntity.badRequest()
-                                .body(e.toErrorResponse(instance).toJSON())));
+                        e -> ErrorResponse.build(e, instance).asMonoResponse());
     }
 
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN') or hasAnyAuthority('ROLE_USER') and authentication.principal.email = #email")
     @Override
     @DeleteMapping("/email/{email}")
     public Mono<ResponseEntity<String>> deleteUserByEmail(
@@ -193,10 +242,12 @@ public class UserController implements IUserController {
         var finder = new UserFinder.ByEmail(email);
         return userService
                 .delete(finder)
-                .map(result -> ResponseEntity.ok(SuccessfulResponse.build(result, instance)))
+                .map(result -> SuccessfulResponse.WithMessage.builder()
+                        .message("User deleted successfully")
+                        .instance(instance)
+                        .build()
+                        .asResponse())
                 .onErrorResume(UserError.class,
-                        e -> Mono.just(ResponseEntity.badRequest()
-                                .body(e.toErrorResponse(instance).toJSON())));
+                        error -> ErrorResponse.build(error, instance).asMonoResponse());
     }
-
 }

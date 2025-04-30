@@ -1,50 +1,66 @@
 package com.ecommerce.nashtech.shared.response;
 
+import java.net.http.HttpResponse;
 import java.time.Instant;
+
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 
 import com.ecommerce.nashtech.shared.error.BaseError;
 import com.ecommerce.nashtech.shared.json.JSON;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.experimental.FieldDefaults;
+import reactor.core.publisher.Mono;
 
-public class ErrorResponse extends BaseError{
-    public String instance;
-    public String timestamp;
+@FieldDefaults(level = lombok.AccessLevel.PUBLIC)
+@Data
+@AllArgsConstructor
+public class ErrorResponse implements BaseResponse {
+    String instance;
+    String timestamp;
+    String message;
+    String code;
 
-    public static class ErrorResponseObject {
-        public String message;
-        public String code;
-        public String instance;
-        public String timestamp;
+    @Builder
+    public static class Err {
+        BaseError error;
+        String instance;
+
+        public ErrorResponse buildResponse() {
+            return new ErrorResponse(
+                    instance,
+                    Instant.now().toString(),
+                    error.getMessage(),
+                    error.getCode());
+
+        }
     }
 
-    public static final String Example = """
-            {
-                "message": "string",
-                "code": "string",
-                "instance": "string",
-                "timestamp": "string"
-            }
-        """;
-
-    private ErrorResponse(String message, String code, String instance) {
-        super(message, code);
-        this.timestamp = Instant.now().toString();
-        this.instance = instance;
+    public static ErrorResponse build(BaseError error, String instance) {
+        return ErrorResponse.Err.builder()
+                .error(error)
+                .instance(instance)
+                .build()
+                .buildResponse();
     }
 
-    public static ErrorResponse build(String message, String code, String instance) {
-        var object = new ErrorResponse(message, code, instance);
-        return object;
+    public ResponseEntity<String> asResponse() {
+        return ResponseEntity.badRequest().body(toJSON());
     }
 
-    @Override
-    public String toJSON(){
-        return JSON.fromArgs(
-            "message", this.message,
-            "code", this.code,
-            "instance", this.instance,
-            "timestamp", this.timestamp
-        );
+    public ResponseEntity<String> asResponse(HttpStatusCode status) {
+        return ResponseEntity.status(status).body(toJSON());
+    }
+
+    public Mono<ResponseEntity<String>> asMonoResponse() {
+        return Mono.just(asResponse());
+    }
+
+    public Mono<ResponseEntity<String>> asMonoResponse(HttpStatusCode status) {
+        return Mono.just(asResponse(status));
     }
 
 }

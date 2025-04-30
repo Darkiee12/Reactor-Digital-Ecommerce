@@ -12,7 +12,8 @@ public sealed abstract class AccountError extends BaseError permits
         AccountError.NotValidUsername,
         AccountError.NotValidPassword,
         AccountError.ExpiredTokenError,
-        AccountError.InvalidTokenError {
+        AccountError.InvalidTokenError,
+        AccountError.UnauthorizedError {
     protected AccountError(String message, String code) {
         super(message, code);
     }
@@ -110,6 +111,16 @@ public sealed abstract class AccountError extends BaseError permits
 
         public static InvalidTokenError build() {
             return new InvalidTokenError();
+        }
+    }
+
+    public static final class UnauthorizedError extends AccountError {
+        private UnauthorizedError() {
+            super("Unauthorized", "ACCOUNT_109");
+        }
+
+        public static UnauthorizedError build() {
+            return new UnauthorizedError();
         }
     }
 

@@ -6,8 +6,14 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
+
+import com.ecommerce.nashtech.shared.json.Serde;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import io.r2dbc.postgresql.codec.Json;
+
 import java.math.BigDecimal;
-import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -39,13 +45,15 @@ public class Product {
     Integer stockQuantity;
 
     @Column("specifications")
-    Map<String, Object> specifications;
+    @JsonSerialize(using = Serde.Serializer.class)
+    @JsonDeserialize(using = Serde.Deserializer.class)
+    Json specifications;
 
     @Column("type")
     String type;
 
     @Column("is_deleted")
-    Boolean isDeleted;
+    Boolean deleted;
 
     @Column("created_at")
     Long createdAt;

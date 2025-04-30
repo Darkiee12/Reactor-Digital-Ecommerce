@@ -70,7 +70,7 @@ public class JwtUtils {
                         Date expiration = jws.getPayload().getExpiration();
                         return expiration != null && expiration.after(new Date());
                     })
-                    .onErrorResume(e -> Mono.just(false));
+                    .onErrorMap(e -> AccountError.InvalidTokenError.build());
         }
 
         @Component

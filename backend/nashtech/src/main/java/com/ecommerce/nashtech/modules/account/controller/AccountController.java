@@ -6,6 +6,7 @@ import com.ecommerce.nashtech.modules.account.service.AccountService;
 import com.ecommerce.nashtech.security.jwt.JwtUtils;
 import com.ecommerce.nashtech.shared.config.ProfileEnvironment;
 import com.ecommerce.nashtech.shared.enums.UserFinder;
+import com.ecommerce.nashtech.shared.response.ErrorResponse;
 import com.ecommerce.nashtech.shared.response.SuccessfulResponse;
 import com.ecommerce.nashtech.shared.types.Option;
 import com.ecommerce.nashtech.shared.util.Router;
@@ -33,7 +34,6 @@ import java.time.Duration;
 import java.util.Map;
 
 @Slf4j
-@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -62,6 +62,7 @@ public class AccountController implements IAccountController {
                 .onErrorResume(AuthenticationException.class, ex -> unauthorizedResponse(instance));
     }
 
+    @Override
     @GetMapping("/refresh")
     public Mono<ResponseEntity<String>> renewAccessToken(ServerWebExchange exchange) {
         String instance = router.getURI("refresh");
@@ -78,17 +79,39 @@ public class AccountController implements IAccountController {
                         .flatMap(finder -> accountService.findFullAccount(finder))
                         .map(fullAccount -> accessTokenProvider.generateToken(fullAccount))
                         .map(accessJwt -> Map.of("accessToken", accessJwt))
-                        .map(accessToken -> ResponseEntity.ok(SuccessfulResponse.build(accessToken, instance)))
+                        .map(accessToken -> SuccessfulResponse.WithData.builder().item(accessToken).build()
+                                .asResponse())
                         .onErrorResume(AccountError.InvalidTokenError.class,
-                                e -> Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                        .body(e.getMessage())));
+                                e -> unauthorizedResponse(instance))
+                        .onErrorResume(AccountError.class, e -> ErrorResponse.build(e, instance).asMonoResponse());
 
             }
             case Option.None<HttpCookie> none -> {
-                yield Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("No refresh token found. Please log in to obtain a new one."));
+                yield unauthorizedResponse(instance);
             }
         };
+    }
+
+    @Override
+    @GetMapping("/logout")
+    public Mono<ResponseEntity<String>> logout(ServerWebExchange exchange) {
+        String instance = router.getURI("logout");
+
+        // Create an expired refreshToken cookie
+        ResponseCookie expiredCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(profileEnvironment.isProduction())
+                .path("/")
+                .sameSite("Lax")
+                .maxAge(Duration.ZERO) // Delete the cookie
+                .build();
+
+        exchange.getResponse().addCookie(expiredCookie);
+
+        return SuccessfulResponse.WithMessage.builder().message("Logout successful")
+                .instance(instance)
+                .build()
+                .asMonoResponse();
     }
 
     // ==== Private helper methods ====
@@ -114,8 +137,12 @@ public class AccountController implements IAccountController {
         String clientIp = extractClientIp(exchange);
         exchange.getResponse().getHeaders().add("X-Client-IP", clientIp);
 
-        Map<String, String> accessToken = Map.of("accessToken", accessJwt);
-        return Mono.just(ResponseEntity.ok(SuccessfulResponse.build(accessToken, instance)));
+        var accessToken = Map.of("accessToken", accessJwt);
+        return SuccessfulResponse.WithData.builder()
+                .item(accessToken)
+                .instance(instance)
+                .build()
+                .asMonoResponse();
     }
 
     private ResponseCookie createRefreshCookie(String refreshToken) {
@@ -123,7 +150,7 @@ public class AccountController implements IAccountController {
                 .httpOnly(true)
                 .secure(profileEnvironment.isProduction())
                 .path("/")
-                .sameSite("None")
+                .sameSite("Lax")
                 .maxAge(Duration.ofMillis(accessTokenProvider.getExpirationMs()))
                 .build();
     }
@@ -142,11 +169,7 @@ public class AccountController implements IAccountController {
     }
 
     private Mono<ResponseEntity<String>> unauthorizedResponse(String instance) {
-        return Mono.just(ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(AccountError.WrongCredentialsError
-                        .build()
-                        .toErrorResponse(instance)
-                        .toJSON()));
+        return ErrorResponse.build(AccountError.WrongCredentialsError.build(), instance)
+                .asMonoResponse(HttpStatus.UNAUTHORIZED);
     }
 }

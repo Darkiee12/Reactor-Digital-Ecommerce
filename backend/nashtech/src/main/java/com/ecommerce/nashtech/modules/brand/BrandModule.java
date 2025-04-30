@@ -1,4 +1,4 @@
-package com.ecommerce.nashtech.modules.brand.service;
+package com.ecommerce.nashtech.modules.brand;
 
 import org.springframework.modulith.ApplicationModule;
 
