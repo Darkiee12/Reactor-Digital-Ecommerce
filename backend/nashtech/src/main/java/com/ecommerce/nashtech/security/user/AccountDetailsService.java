@@ -1,25 +1,27 @@
 package com.ecommerce.nashtech.security.user;
-import com.ecommerce.nashtech.models.Account;
-import com.ecommerce.nashtech.repositories.AccountRepository;
 
+import com.ecommerce.nashtech.modules.account.service.AccountService;
+import com.ecommerce.nashtech.shared.enums.UserFinder;
 
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import reactor.core.publisher.Mono;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-
 @Service
 @RequiredArgsConstructor
-public class AccountDetailsService implements UserDetailsService {
-    private final AccountRepository accountRepository;
+@FieldDefaults(makeFinal = true, level = lombok.AccessLevel.PRIVATE)
+public class AccountDetailsService implements ReactiveUserDetailsService {
+    AccountService accountService;
+
     @Override
-    public AccountDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Account account = accountRepository.findByUsername(username).orElseGet(() -> {
-            throw new UsernameNotFoundException("User Not Found with username: " + username);
-        });
-        return AccountDetails.build(account);
+    public Mono<UserDetails> findByUsername(String username) throws UsernameNotFoundException {
+        return accountService.findFullAccount(new UserFinder.ByUsername(username))
+                .map(account -> (UserDetails) AccountDetails.build(account))
+                .switchIfEmpty(Mono.error(new UsernameNotFoundException("User not found with username: " + username)));
     }
 }

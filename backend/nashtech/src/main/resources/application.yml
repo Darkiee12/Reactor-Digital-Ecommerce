@@ -1,9 +1,8 @@
 spring:
   application:
     name: ecommerce
-  config:
-    activate:
-      on-profile: dev
+  profiles:
+    default: dev
 
 # === Default settings (applied to all profiles) ===
 springdoc:
@@ -14,27 +13,30 @@ logging:
   level:
     org.springframework.web: DEBUG
     com.myapp.service: INFO
+    org.springframework.data.r2dbc.core: DEBUG
+    io.r2dbc.postgresql.QUERY: DEBUG
+    io.r2dbc.spi: DEBUG
   file:
     name: myapp.log
 
 ---
+
 spring:
   config:
     activate:
       on-profile: dev
-  datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
-    properties:
-      hibernate:
-        format_sql: true
-    show-sql: ${SPRING_JPA_SHOW_SQL}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    url: ${FLYWAY_DATABASE_URL}
+    user: ${SPRING_R2DBC_USERNAME}
+    password: ${SPRING_R2DBC_PASSWORD}
+  r2dbc:
+    url: ${SPRING_R2DBC_URL}
+    username: ${SPRING_R2DBC_USERNAME}
+    password: ${SPRING_R2DBC_PASSWORD}
   security:
     user:
       name: ${SPRING_SECURITY_USER_NAME}
@@ -45,35 +47,33 @@ spring:
       max-request-size: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE}
 
 auth:
-  token:
-    expirationInMils: ${AUTH_TOKEN_EXPIRATION_IN_MILLIS}
-    jwtSecret: ${AUTH_TOKEN_JWT_SECRET}
+  accessToken:
+    expirationInMillis: ${SPRING_ACCESS_JWT_EXPIRATION_IN_MILLIS}
+    jwtSecret: ${SPRING_ACCESS_JWT_SECRET}
+  refreshToken:
+    expirationInMillis: ${SPRING_REFRESH_JWT_EXPIRATION_IN_MILLIS}
+    jwtSecret: ${SPRING_REFRESH_JWT_SECRET}
 
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
+minio:
+  url: ${MINIO_URL}
+  access:
+    name: ${MINIO_ACCESS_KEY}
+    secret: ${MINIO_SECRET_KEY}
+  bucket:
+    name: ${MINIO_BUCKET_NAME}
+
 
 ---
+
 spring:
   config:
     activate:
       on-profile: prod
-  datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+  r2dbc:
+    url: ${SPRING_R2DBC_URL}
+    username: ${SPRING_R2DBC_USERNAME}
+    password: ${SPRING_R2DBC_PASSWORD}
   security:
     user:
       name: ${SPRING_SECURITY_USER_NAME}
       password: ${SPRING_SECURITY_USER_PASSWORD}
-
-
