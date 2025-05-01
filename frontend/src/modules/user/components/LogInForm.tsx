@@ -5,24 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import React, { useState } from 'preact/compat';
 import { h } from 'preact';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
-import UserService from '@/modules/user/service/UserApi';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import LoginInput from '@/modules/user/model/LoginInput';
-import DataResponse from '@/shared/response/model/DataResponse';
-import AccessToken from '@/modules/user/model/AccessToken';
-import ErrorResponse from '@/modules/error/model/Error';
-import { AxiosError } from 'axios';
-import { useLogin } from '../hooks/useLogin';
+import useLogin from '../hooks/useLogin';
 import loginSchema from '../schema/LoginSchema';
-import { useCurrentUser } from '../hooks/useCurrentUser';
 const LogInForm = ({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const error = useSelector((state: RootState) => state.error);
   const loginMutation = useLogin();
-  const currentUser = useCurrentUser();
 
   const handleUsernameChange = (e: h.JSX.TargetedEvent<HTMLInputElement, Event>) => {
     setUsername(e.currentTarget.value);
@@ -40,7 +28,6 @@ const LogInForm = ({ className, ...props }: React.ComponentPropsWithoutRef<'div'
     });
     if (result.success) {
       loginMutation.mutate({ username, password });
-      currentUser;
     }
   };
 

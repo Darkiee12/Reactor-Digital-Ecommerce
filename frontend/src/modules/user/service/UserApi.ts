@@ -6,12 +6,14 @@ import { AxiosError } from 'axios';
 import LoginInput from '../model/LoginInput';
 import { User } from '../model/User';
 import store from '@/store';
-import { setAccessToken } from '../state/AuthSlice';
+import { Result } from 'ts-results';
+import { AxiosResponse } from 'axios';
 
-export const refreshAccessTokenFn = async () => {
-  const response = await api.get<DataResponse<AccessToken>>('/auth/refresh');
-  store.dispatch(setAccessToken(response.data.item));
-  return response.data.item;
+export const refreshAccessToken = async () => {
+  return await Result.wrapAsync<
+    AxiosResponse<DataResponse<AccessToken>, any>,
+    AxiosError<ErrorResponse>
+  >(() => api.get<DataResponse<AccessToken>>('/auth/refresh'));
 };
 
 api.interceptors.response.use(
@@ -21,7 +23,10 @@ api.interceptors.response.use(
     const errCode = error.response?.data.code;
     const errStatus = error.response?.status;
     if (originalRequest && errStatus === 401 && errCode === 'ACCOUNT_107') {
-      await refreshAccessTokenFn();
+      await refreshAccessToken();
+      const state = store.getState();
+      const newToken = state.auth.accessToken;
+      originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
       return api(originalRequest);
     }
     return Promise.reject(error);
@@ -29,17 +34,28 @@ api.interceptors.response.use(
 );
 
 export const login = async (user: LoginInput) => {
-  const response = await api.post<DataResponse<AccessToken>>('auth/login', user);
-  return response.data;
+  return await Result.wrapAsync<
+    AxiosResponse<DataResponse<AccessToken>, any>,
+    AxiosError<ErrorResponse>
+  >(() => api.post<DataResponse<AccessToken>>('auth/login', user));
 };
 
 export const getCurrentUser = async () => {
-  const response = await api.get<DataResponse<User>>('users/me');
-  return response.data;
+  return await Result.wrapAsync<AxiosResponse<DataResponse<User>, any>, AxiosError<ErrorResponse>>(
+    () => api.get<DataResponse<User>>('users/me')
+  );
+};
+
+export const logout = async () => {
+  return await Result.wrapAsync<AxiosResponse<DataResponse<void>, any>, AxiosError<ErrorResponse>>(
+    () => api.post<DataResponse<void>>('auth/logout')
+  );
 };
 
 const UserService = {
   login,
+  logout,
   getCurrentUser,
+  refreshAccessToken,
 };
 export default UserService;

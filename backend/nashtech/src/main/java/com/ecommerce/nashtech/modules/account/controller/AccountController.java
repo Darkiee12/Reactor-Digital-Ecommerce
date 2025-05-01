@@ -93,11 +93,10 @@ public class AccountController implements IAccountController {
     }
 
     @Override
-    @GetMapping("/logout")
+    @PostMapping("/logout")
     public Mono<ResponseEntity<String>> logout(ServerWebExchange exchange) {
         String instance = router.getURI("logout");
 
-        // Create an expired refreshToken cookie
         ResponseCookie expiredCookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .secure(profileEnvironment.isProduction())
@@ -151,7 +150,7 @@ public class AccountController implements IAccountController {
                 .secure(profileEnvironment.isProduction())
                 .path("/")
                 .sameSite("Lax")
-                .maxAge(Duration.ofMillis(accessTokenProvider.getExpirationMs()))
+                .maxAge(Duration.ofMillis(refreshTokenProvider.getExpirationMs()))
                 .build();
     }
 
