@@ -3,10 +3,13 @@ package com.ecommerce.nashtech.modules.image.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 import io.minio.MinioClient;
 import io.minio.errors.MinioException;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 @Configuration
 public class MinIOConfig {
@@ -29,5 +32,7 @@ public class MinIOConfig {
                 .endpoint(minioUrl)
                 .credentials(accessKey, secretKey)
                 .build();
+
     }
+
 }

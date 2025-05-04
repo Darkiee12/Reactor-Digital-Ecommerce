@@ -3,19 +3,26 @@ package com.ecommerce.nashtech.modules.product.service;
 import com.ecommerce.nashtech.modules.brand.internal.repository.BrandRepository;
 import com.ecommerce.nashtech.modules.brand.model.Brand;
 import com.ecommerce.nashtech.modules.category.model.Category;
+import com.ecommerce.nashtech.modules.image.model.Image;
+import com.ecommerce.nashtech.modules.image.service.ImageService;
 import com.ecommerce.nashtech.modules.product.dto.FullProductDto;
+import com.ecommerce.nashtech.modules.product.dto.ProductBrandCountDto;
+import com.ecommerce.nashtech.modules.product.dto.ProductCategoryCountDto;
 import com.ecommerce.nashtech.modules.product.error.ProductError;
 import com.ecommerce.nashtech.modules.product.internal.repository.ProductRepository;
 import com.ecommerce.nashtech.modules.product.internal.repository.ProductCategoryRepository;
+import com.ecommerce.nashtech.modules.product.internal.repository.ProductImageRepository;
 import com.ecommerce.nashtech.modules.product.model.Product;
+import com.ecommerce.nashtech.modules.product.model.ProductImage;
 import com.ecommerce.nashtech.shared.enums.ProductFinder;
 import com.ecommerce.nashtech.shared.types.Option;
 
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 
@@ -24,7 +31,9 @@ import reactor.core.publisher.Mono;
 
 import static lombok.AccessLevel.PRIVATE;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -33,8 +42,11 @@ public class ProductService implements IProductService {
 
     ProductRepository productRepo;
     ProductCategoryRepository productCategoryRepo;
+    ProductImageRepository productImageRepo;
     BrandRepository brandRepo;
     TransactionalOperator txOperator;
+    R2dbcEntityTemplate template;
+    ImageService imageService;
 
     @Override
     public Mono<Product> find(ProductFinder finder) {
@@ -55,10 +67,13 @@ public class ProductService implements IProductService {
                             .findAllCategoriesByProductId(product.getId())
                             .map(Category::getName)
                             .collectList();
-                    return Mono.zip(brandMono, categoriesMono)
+                    Mono<List<ProductImage>> productImages = productImageRepo.findAllByProductUuid(product.getUuid())
+                            .collectList();
+                    return Mono.zip(brandMono, categoriesMono, productImages)
                             .map(tuple -> {
                                 var brand = tuple.getT1();
                                 var categories = tuple.getT2();
+                                var imagesUuid = tuple.getT3().stream().map(ProductImage::getImageUuid).toList();
                                 return FullProductDto.builder()
                                         .brandName(brand.getName())
                                         .name(product.getName())
@@ -70,7 +85,7 @@ public class ProductService implements IProductService {
                                         .type(product.getType())
                                         .createdAt(product.getCreatedAt())
                                         .updatedAt(product.getUpdatedAt())
-                                        .imagesUuid(null) // Todo: Add logic to fetch images
+                                        .imagesUuid(imagesUuid)
                                         .categories(categories)
                                         .build();
                             });
@@ -91,9 +106,21 @@ public class ProductService implements IProductService {
 
     @Override
     public Mono<Long> countByBrand(Long id) {
-        return productRepo.countByBrandId(id)
-                .filter(count -> count > 0)
-                .switchIfEmpty(Mono.error(ProductError.ProductNotFoundError.build(Option.none())));
+        return productRepo.countByBrandId(id);
+    }
+
+    @Override
+    public Flux<ProductBrandCountDto> countByBrandIds(List<Long> brandIds) {
+        if (brandIds.isEmpty()) {
+            return Flux.empty();
+        }
+        return template.getDatabaseClient()
+                .sql("SELECT brand_id AS brandId, COUNT(*) AS count FROM products WHERE brand_id = ANY(:ids) GROUP BY brand_id")
+                .bind("ids", brandIds.toArray(new Long[0]))
+                .map((row, metadata) -> new ProductBrandCountDto(
+                        row.get("brandId", Long.class),
+                        row.get("count", Long.class)))
+                .all();
     }
 
     @Override
@@ -113,6 +140,66 @@ public class ProductService implements IProductService {
         return productCategoryRepo.countByCategoryId(id)
                 .filter(count -> count > 0)
                 .switchIfEmpty(Mono.error(ProductError.ProductNotFoundError.build(Option.none())));
+    }
+
+    @Override
+    public Flux<ProductCategoryCountDto> countByCategoryIds(List<Long> categoryIds) {
+        if (categoryIds.isEmpty()) {
+            return Flux.empty();
+        }
+        return template.getDatabaseClient()
+                .sql("SELECT category_id AS categoryId, COUNT(*) AS count FROM product_category WHERE category_id = ANY(:ids) GROUP BY category_id")
+                .bind("ids", categoryIds.toArray(new Long[0]))
+                .map((row, metadata) -> new ProductCategoryCountDto(
+                        row.get("categoryId", Long.class),
+                        row.get("count", Long.class)))
+                .all();
+    }
+
+    @Override
+    public Mono<Image> uploadProductImage(UUID productUuid,
+            FilePart filePart,
+            String altText) {
+        return imageService.uploadImage(filePart, altText)
+                .flatMap(image -> {
+                    ProductImage link = ProductImage.builder()
+                            .productUuid(productUuid)
+                            .imageUuid(image.getUuid())
+                            .createdAt(Instant.now().toEpochMilli())
+                            .build();
+                    return productImageRepo.save(link)
+                            .thenReturn(image);
+                })
+                .as(txOperator::transactional);
+    }
+
+    @Override
+    public Flux<Image> uploadProductImages(UUID productUuid,
+            Flux<FilePart> fileParts,
+            String altText) {
+        return fileParts
+                .flatMap(file -> uploadProductImage(productUuid, file, altText))
+                .as(txOperator::transactional);
+    }
+
+    public Flux<Image> getProductImages(UUID productUuid) {
+        return productImageRepo.findAllByProductUuid(productUuid)
+                .flatMap(link -> imageService.getImageMetadata(link.getImageUuid()));
+    }
+
+    public Flux<Image> getMetadataOfAllImages(UUID productUuid) {
+        return productImageRepo.findAllByProductUuid(productUuid)
+                .flatMap(link -> imageService.getImageMetadata(link.getImageUuid()));
+    }
+
+    public Flux<Image> getImagesByUuids(List<UUID> imageUuids) {
+        return Flux.fromIterable(imageUuids)
+                .flatMap(imageService::getImageMetadata);
+    }
+
+    public Flux<Image> getImagesByUuids(Flux<UUID> imageUuids) {
+        return imageUuids
+                .flatMap(imageService::getImageMetadata);
     }
 
 }

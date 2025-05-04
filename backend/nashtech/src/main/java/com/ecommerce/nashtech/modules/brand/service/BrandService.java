@@ -18,6 +18,8 @@ import com.ecommerce.nashtech.modules.brand.dto.UpdateBrandDto;
 import com.ecommerce.nashtech.modules.brand.error.BrandError;
 import com.ecommerce.nashtech.modules.brand.internal.repository.BrandRepository;
 import com.ecommerce.nashtech.modules.brand.model.Brand;
+import com.ecommerce.nashtech.modules.product.dto.ProductBrandCountDto;
+import com.ecommerce.nashtech.modules.product.service.IProductService;
 import com.ecommerce.nashtech.shared.types.Option;
 
 @Slf4j
@@ -26,6 +28,7 @@ import com.ecommerce.nashtech.shared.types.Option;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class BrandService implements IBrandService {
     BrandRepository brandRepo;
+    IProductService productService;
     R2dbcEntityTemplate template;
     TransactionalOperator txOperator;
 
@@ -41,13 +44,36 @@ public class BrandService implements IBrandService {
 
     @Override
     public Mono<BrandDto> findDtoById(Long id) {
-        return findById(id)
-                .map(BrandDto::from);
+        var productCount = productService.countByBrand(id);
+        // var productDistinctCount = productService.countDistinctByBrand(id);
+        var brandMono = findById(id);
+        return Mono.zip(brandMono, productCount
+        // , productDistinctCount
+        )
+                .map(tuple -> {
+                    var brand = tuple.getT1();
+                    var count = tuple.getT2();
+                    // var distinctCount = tuple.getT3();
+                    return BrandDto.from(brand, count);
+                });
     }
 
     @Override
     public Flux<BrandDto> findAll(Pageable pageable) {
-        return brandRepo.findAllBy(pageable).map(BrandDto::from);
+        return brandRepo.findAllBy(pageable)
+                .collectList()
+                .flatMapMany(brands -> {
+                    var brandIds = brands.stream().map(Brand::getId).toList();
+                    return productService.countByBrandIds(brandIds)
+                            .collectMap(ProductBrandCountDto::brandId, ProductBrandCountDto::count)
+                            .flatMapMany(countMap -> Flux.fromIterable(brands)
+                                    .map(brand -> {
+                                        Long productCount = countMap.getOrDefault(brand.getId(), 0L);
+
+                                        return BrandDto.from(brand, productCount);
+                                    }));
+
+                });
     }
 
     @Override

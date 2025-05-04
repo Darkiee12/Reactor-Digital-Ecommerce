@@ -8,13 +8,9 @@ import { User } from '../model/User';
 import store from '@/store';
 import { Result } from 'ts-results';
 import { AxiosResponse } from 'axios';
-
-export const refreshAccessToken = async () => {
-  return await Result.wrapAsync<
-    AxiosResponse<DataResponse<AccessToken>, any>,
-    AxiosError<ErrorResponse>
-  >(() => api.get<DataResponse<AccessToken>>('/auth/refresh'));
-};
+import MessageResponse from '@/shared/response/model/MessageResponse';
+import { Finder } from '../model/enums';
+import UpdateUser from '../model/UpdateUser';
 
 api.interceptors.response.use(
   response => response,
@@ -33,22 +29,69 @@ api.interceptors.response.use(
   }
 );
 
-export const login = async (user: LoginInput) => {
+const refreshAccessToken = async () => {
   return await Result.wrapAsync<
     AxiosResponse<DataResponse<AccessToken>, any>,
     AxiosError<ErrorResponse>
-  >(() => api.post<DataResponse<AccessToken>>('auth/login', user));
+  >(() => api.get<DataResponse<AccessToken>>('/auth/refresh'));
 };
 
-export const getCurrentUser = async () => {
+const login = async (user: LoginInput) => {
+  return await Result.wrapAsync<
+    AxiosResponse<DataResponse<AccessToken>, any>,
+    AxiosError<ErrorResponse>
+  >(async () => await api.post<DataResponse<AccessToken>>('auth/login', user));
+};
+
+const getCurrentUser = async () => {
   return await Result.wrapAsync<AxiosResponse<DataResponse<User>, any>, AxiosError<ErrorResponse>>(
-    () => api.get<DataResponse<User>>('users/me')
+    async () => await api.get<DataResponse<User>>('users/me')
   );
 };
 
-export const logout = async () => {
+const logout = async () => {
   return await Result.wrapAsync<AxiosResponse<DataResponse<void>, any>, AxiosError<ErrorResponse>>(
-    () => api.post<DataResponse<void>>('auth/logout')
+    async () => await api.post<DataResponse<void>>('auth/logout')
+  );
+};
+
+const checkUserExists = async (finder: Finder) => {
+  let endpoint: string;
+  switch (finder.type) {
+    case 'username':
+      endpoint = `auth/exists/username/${finder.value}`;
+      break;
+    case 'email':
+      endpoint = `auth/exists/email/${finder.value}`;
+      break;
+    case 'uuid':
+      endpoint = `auth/exists/uuid/${finder.value}`;
+      break;
+  }
+
+  return await Result.wrapAsync<AxiosResponse<MessageResponse, any>, AxiosError<ErrorResponse>>(
+    async () => await api.get<MessageResponse>(endpoint)
+  );
+};
+
+const updateUser = async (finder: Finder, user: UpdateUser) => {
+  let endpoint: string;
+  switch (finder.type) {
+    case 'username':
+      endpoint = `users/username/${finder.value}`;
+      break;
+    case 'email':
+      endpoint = `users/email/${finder.value}`;
+      break;
+    case 'uuid':
+      endpoint = `users/uuid/${finder.value}`;
+      break;
+    default:
+      throw new Error(`Invalid finder type: ${finder.type}`);
+  }
+
+  return Result.wrapAsync<AxiosResponse<DataResponse<User>>, AxiosError<ErrorResponse>>(() =>
+    api.patch<DataResponse<User>>(endpoint, user)
   );
 };
 
@@ -57,5 +100,7 @@ const UserService = {
   logout,
   getCurrentUser,
   refreshAccessToken,
+  checkUserExists,
+  updateUser,
 };
 export default UserService;

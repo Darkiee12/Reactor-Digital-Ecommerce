@@ -15,6 +15,9 @@ import com.ecommerce.nashtech.modules.user.service.IUserService;
 import com.ecommerce.nashtech.shared.enums.RoleEnum;
 import com.ecommerce.nashtech.shared.enums.UserFinder;
 
+import io.minio.BucketExistsArgs;
+import io.minio.MakeBucketArgs;
+import io.minio.MinioClient;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
@@ -39,6 +42,12 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
     @NonFinal
     String adminPassword;
 
+    @Value("${minio.bucket.name}")
+    @NonFinal
+    String bucketName;
+
+    MinioClient minioClient;
+
     @Override
     public void onApplicationEvent(@NonNull ApplicationReadyEvent e) {
         initialize()
@@ -50,7 +59,8 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
 
     private Mono<Void> initialize() {
         return ensureRoles()
-                .then(ensureDefaultAdmin());
+                .then(ensureDefaultAdmin())
+                .then(ensureMinioBucketExists());
     }
 
     private Mono<Void> ensureRoles() {
@@ -85,5 +95,25 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
                 .onErrorResume(RuntimeException.class, e -> Mono.empty())
                 .flatMap(account -> roleService.updateRole(RoleEnum.AdminRole.getId(), account.getId()))
                 .as(tx::transactional);
+    }
+
+    private Mono<Void> ensureMinioBucketExists() {
+        return Mono.fromCallable(() -> {
+            boolean exists = minioClient.bucketExists(
+                    BucketExistsArgs.builder().bucket(bucketName).build());
+            if (!exists) {
+                minioClient.makeBucket(
+                        MakeBucketArgs.builder().bucket(bucketName).build());
+                log.info("MinIO bucket '{}' created.", bucketName);
+            } else {
+                log.info("MinIO bucket '{}' already exists.", bucketName);
+            }
+            return true;
+        })
+                .then()
+                .onErrorResume(e -> {
+                    log.error("Failed to ensure MinIO bucket exists", e);
+                    return Mono.error(new RuntimeException("Failed to ensure MinIO bucket exists", e));
+                });
     }
 }

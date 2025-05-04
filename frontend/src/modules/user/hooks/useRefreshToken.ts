@@ -1,5 +1,4 @@
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import UserService from '../service/UserApi';
 import { setError } from '@/modules/error/state/ErrorSlice';
 import ErrorResponse from '@/modules/error/model/Error';

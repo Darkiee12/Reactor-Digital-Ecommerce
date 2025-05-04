@@ -12,6 +12,7 @@
                 "quicktype.quicktype",
                 "eamodio.gitlens",
                 "austenc.tailwind-docs",
+                "bradlc.vscode-tailwindcss",
                 "esbenp.prettier-vscode",
                 "ms-azuretools.vscode-docker",
                 "christian-kohler.path-intellisense",

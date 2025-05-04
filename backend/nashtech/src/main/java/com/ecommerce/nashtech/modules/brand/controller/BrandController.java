@@ -4,7 +4,6 @@ import com.ecommerce.nashtech.modules.brand.dto.UpdateBrandDto;
 import com.ecommerce.nashtech.modules.brand.error.BrandError;
 import com.ecommerce.nashtech.modules.brand.dto.BrandDto;
 import com.ecommerce.nashtech.modules.brand.service.IBrandService;
-import com.ecommerce.nashtech.shared.config.PaginationConfiguration;
 import com.ecommerce.nashtech.shared.response.ErrorResponse;
 import com.ecommerce.nashtech.shared.response.SuccessfulResponse;
 import com.ecommerce.nashtech.shared.util.Router;
@@ -22,7 +21,7 @@ import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/brands")
+@RequestMapping("/api/v1/brands")
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)

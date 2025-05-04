@@ -9,12 +9,16 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "users")
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class User {
