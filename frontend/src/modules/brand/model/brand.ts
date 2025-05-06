@@ -1,5 +1,5 @@
 export default interface Brand {
+  id: number;
   name: string;
-  logo: string | null;
   count: number;
 }

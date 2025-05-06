@@ -22,7 +22,6 @@ import com.ecommerce.nashtech.shared.types.Option;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.http.codec.multipart.FilePart;
@@ -206,11 +205,15 @@ public class ProductService implements IProductService {
                 .flatMap(imageService::getImageMetadata);
     }
 
-    public Flux<Product> findProductsByNamePrefix(String namePrefix) {
+    public Flux<FullProductDto> findProductsByNamePrefix(String namePrefix) {
         if (namePrefix == null || namePrefix.trim().isEmpty()) {
             return Flux.empty();
         }
-        return productRepo.findByNameStartingWithIgnoreCase(namePrefix);
+        return productRepo.findByNameStartingWithIgnoreCase(namePrefix)
+                .flatMap(id -> {
+                    var finder = new ProductFinder.ById(id.getId());
+                    return getFullProduct(finder);
+                });
     }
 
     public Mono<Long> countByNamePrefix(String namePrefix) {
@@ -220,11 +223,16 @@ public class ProductService implements IProductService {
         return productRepo.countByNameStartingWithIgnoreCase(namePrefix);
     }
 
-    public Flux<Product> findProducts(String searchTerm, Pageable pageable) {
+    public Flux<FullProductDto> findProducts(String searchTerm, Pageable pageable) {
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
             return Flux.empty();
         }
-        return productRepo.findByNameContainingIgnoreCase(searchTerm, pageable);
+        return productRepo.findByNameContainingIgnoreCase(searchTerm, pageable)
+                .flatMap(id -> {
+                    var finder = new ProductFinder.ById(id.getId());
+                    return getFullProduct(finder);
+                });
+
     }
 
     public Mono<Long> countByName(String searchTerm) {

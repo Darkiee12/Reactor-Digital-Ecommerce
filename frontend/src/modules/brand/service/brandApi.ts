@@ -13,3 +13,17 @@ const getBrandById = async (id: string) => {
 const createBrand = async (brand: Brand) => {
   return await api.post<Brand>('/brands', brand);
 };
+
+const search = async (searchTerm: string, page: number = 0) => {
+  return await api.get<PageResponse<Brand>>(
+    `/brands/search?searchTerm=${searchTerm}&${page}=0&size=10`
+  );
+};
+
+const BrandService = {
+  getAllBrands,
+  getBrandById,
+  createBrand,
+  search,
+};
+export default BrandService;

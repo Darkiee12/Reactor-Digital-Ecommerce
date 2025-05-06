@@ -4,6 +4,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
 
+import com.ecommerce.nashtech.modules.brand.internal.projection.BrandIdProjection;
 import com.ecommerce.nashtech.modules.brand.model.Brand;
 
 import reactor.core.publisher.Flux;
@@ -21,4 +22,9 @@ public interface BrandRepository extends R2dbcRepository<Brand, Long> {
     Mono<Boolean> existsById(Long id);
 
     Mono<Boolean> existsByName(String name);
+
+    Flux<BrandIdProjection> findByNameContainingIgnoreCase(String searchTerm, Pageable pageable);
+
+    Mono<Long> countByNameContainingIgnoreCase(String searchTerm);
+
 }

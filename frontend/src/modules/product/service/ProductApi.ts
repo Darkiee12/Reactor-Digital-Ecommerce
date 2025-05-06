@@ -8,7 +8,7 @@ const getProductByUuid = async (uuid: string) => {
   return await api.get<DataResponse<Product>>(`/products/uuid/${uuid}`);
 };
 
-const getProducts = async (finder: ProductsFinder) => {
+const getProducts = async (finder: ProductsFinder, page: number = 0) => {
   const { type, value } = finder;
   let url = '';
   switch (type) {
@@ -16,10 +16,10 @@ const getProducts = async (finder: ProductsFinder) => {
       url = `/products/category/${value}?page=0&size=20`;
       break;
     case 'brand':
-      url = `/products/brand/${value}?page=0&size=20`;
+      url = `/products/brand/${value}?page=${page}&size=20`;
       break;
     case 'name':
-      url = `/products/search?name=${value}&page=0&size=20`;
+      url = `/products/search?name=${value}&page=${page}&size=20`;
       break;
     default:
       throw new Error('Invalid finder type');

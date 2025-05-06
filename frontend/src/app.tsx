@@ -12,6 +12,8 @@ import BrandPage from './pages/BrandPage';
 import CategoryPage from '@/pages/CategoryPage';
 import useRefreshToken from './modules/user/hooks/useRefreshToken';
 import AuthorizedLayout from './pages/AuthorizedLayout';
+import { ThemeProvider } from './components/ThemeProvider';
+import FullproductSubpage from './modules/product/subpage/FullProductSubpage';
 
 export default function App() {
   const token = useSelector((state: RootState) => state.auth.accessToken);
@@ -54,19 +56,25 @@ export default function App() {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Layout />}>
-        {!token && <Route index element={<LoginPage />} />}
-        {user && (
-          <Route element={<AuthorizedLayout />}>
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/users" element={<UserPage />} />
-            <Route path="/products" element={<ProductPage />} />
-            <Route path="/brands" element={<BrandPage />} />
-            <Route path="/categories" element={<CategoryPage />} />
-          </Route>
-        )}
-      </Route>
-    </Routes>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          {!token && <Route index element={<LoginPage />} />}
+          {user && (
+            <>
+              <Route element={<AuthorizedLayout />}>
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/users" element={<UserPage />} />
+                <Route path="/products" element={<ProductPage />} />
+
+                <Route path="/brands" element={<BrandPage />} />
+                <Route path="/categories" element={<CategoryPage />} />
+              </Route>
+              <Route path="/products/:id" element={<FullproductSubpage />} />
+            </>
+          )}
+        </Route>
+      </Routes>
+    </ThemeProvider>
   );
 }

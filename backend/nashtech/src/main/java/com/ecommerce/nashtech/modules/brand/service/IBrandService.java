@@ -26,4 +26,8 @@ public interface IBrandService {
     Mono<Void> delete(Long id);
 
     Mono<Void> uploadImage(Long id, FilePart logo, String altText);
+
+    Flux<Brand> search(String searchTerm, Pageable pageable);
+
+    Mono<Long> countByNameContainingIgnoreCase(String searchTerm);
 }

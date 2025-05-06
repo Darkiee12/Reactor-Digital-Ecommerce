@@ -106,4 +106,15 @@ public class BrandService implements IBrandService {
 
     }
 
+    @Override
+    public Flux<Brand> search(String searchTerm, Pageable pageable) {
+        return brandRepo.findByNameContainingIgnoreCase(searchTerm, pageable)
+                .flatMap(brandIdProjection -> brandRepo.findById(brandIdProjection.getId()));
+    }
+
+    @Override
+    public Mono<Long> countByNameContainingIgnoreCase(String searchTerm) {
+        return brandRepo.countByNameContainingIgnoreCase(searchTerm);
+    }
+
 }

@@ -93,4 +93,17 @@ public interface IBrandController {
             @RequestPart("file") Mono<FilePart> filePart,
             @PathVariable Long brandId,
             @RequestPart("altText") String altText);
+
+    @Operation(summary = "Search brands", description = "Search for brands by name")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Brands retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.WithData.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid search parameters", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @Parameter(description = "Search term to filter brands by name", required = true, schema = @Schema(type = "string"))
+    @Parameter(description = "Page number (zero-based)", schema = @Schema(type = "integer", defaultValue = "0"))
+    @Parameter(description = "Number of items per page", schema = @Schema(type = "integer", defaultValue = "10"))
+    Mono<ResponseEntity<String>> search(@RequestParam String searchTerm,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size);
 }

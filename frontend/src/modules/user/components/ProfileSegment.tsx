@@ -60,9 +60,9 @@ const ProfileSegment = () => {
   };
   return (
     <div id="profile" className="w-full px-8">
-      <p className="text-2xl border-b border-b-[#3D444D] pb-2">Public profile</p>
-      <div className="w-full flex">
-        <div className="w-2/3 pr-8">
+      <p className="text-2xl border-b border-b-[#3D444D] mb-4 pb-1">Public profile</p>
+      <div className="w-full flex flex-wrap">
+        <div className="w-full md:w-2/3 pr-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-y-5">
               <FormField
@@ -75,7 +75,7 @@ const ProfileSegment = () => {
                       <Input
                         placeholder="shadcn"
                         {...field}
-                        className="focus-visible:border-2 focus-visible:border-blue-600 bg-[#151b23]"
+                        className="focus-visible:border-2 focus-visible:border-blue-600 "
                       />
                     </FormControl>
                     <FormDescription>This is your full name.</FormDescription>
@@ -93,7 +93,7 @@ const ProfileSegment = () => {
                       <Input
                         placeholder="shadcn"
                         {...field}
-                        className="focus-visible:border-2 focus-visible:border-blue-600 bg-[#151b23]"
+                        className="focus-visible:border-2 focus-visible:border-blue-600"
                       />
                     </FormControl>
                     <FormDescription>This is your full name.</FormDescription>
@@ -112,7 +112,7 @@ const ProfileSegment = () => {
                         international
                         defaultCountry="VN"
                         {...field}
-                        className="w-full max-h-10 focus-visible:border-2 focus-visible:border-blue-600 bg-[#151b23]"
+                        className="w-full max-h-10 focus-visible:border-2 focus-visible:border-blue-600"
                       />
                     </FormControl>
                     <FormDescription>
@@ -132,7 +132,7 @@ const ProfileSegment = () => {
                       <Input
                         placeholder="Enter address here"
                         {...field}
-                        className="focus-visible:border-2 focus-visible:border-blue-600 bg-[#151b23]"
+                        className="focus-visible:border-2 focus-visible:border-blue-600"
                       />
                     </FormControl>
                     <FormDescription>
@@ -152,7 +152,7 @@ const ProfileSegment = () => {
                       <Input
                         placeholder="Enter city here"
                         {...field}
-                        className="focus-visible:border-2 focus-visible:border-blue-600 bg-[#151b23]"
+                        className="focus-visible:border-2 focus-visible:border-blue-600"
                       />
                     </FormControl>
                     <FormDescription>
@@ -172,7 +172,7 @@ const ProfileSegment = () => {
                       <Input
                         placeholder="Enter state here"
                         {...field}
-                        className="focus-visible:border-2 focus-visible:border-blue-600 bg-[#151b23]"
+                        className="focus-visible:border-2 focus-visible:border-blue-600"
                       />
                     </FormControl>
                     <FormDescription>
@@ -192,7 +192,7 @@ const ProfileSegment = () => {
                       <Input
                         placeholder="Enter country here"
                         {...field}
-                        className="focus-visible:border-2 focus-visible:border-blue-600 bg-[#151b23]"
+                        className="focus-visible:border-2 focus-visible:border-blue-600"
                       />
                     </FormControl>
                     <FormDescription>
@@ -208,7 +208,7 @@ const ProfileSegment = () => {
             </form>
           </Form>
         </div>
-        <div className="w-1/3 px-2">
+        <div className="w-full md:w-1/3 px-2">
           <p>Profile picture</p>
           <div className="w-full rounded-lg flex items-center justify-center py-3">
             <Avatar className="bg-white w-full h-full aspect-auto">

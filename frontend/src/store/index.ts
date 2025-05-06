@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { authSlice } from '@/modules/user/state/AuthSlice';
 import { errorSlice } from '@/modules/error/state/ErrorSlice';
 import { userSlice } from '@/modules/user/state/UserSlice';
+import { productSlice } from '@/modules/product/state/productSlice';
 import { useDispatch } from 'react-redux';
 
 const store = configureStore({
@@ -9,6 +10,7 @@ const store = configureStore({
     auth: authSlice.reducer,
     error: errorSlice.reducer,
     user: userSlice.reducer,
+    product: productSlice.reducer,
   },
 });
 

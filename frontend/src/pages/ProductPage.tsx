@@ -1,10 +1,11 @@
 import { useState } from 'preact/hooks';
-import * as ProductComponent from '@/modules/product/components';
-import TabComponent, { TabItem } from '@/components/custom/Tab';
+import * as ProductComponent from '@/modules/product/subpage';
+import TabComponent, { VerticalTabItem } from '@/components/custom/VerticalTab';
 import { ALargeSmall, Cat, ChartBarStacked, IdCard } from 'lucide-react';
 
-const productTabs: TabItem[] = [
+const productTabs: VerticalTabItem[] = [
   {
+    id: 'finduuid',
     label: (
       <span>
         <IdCard className="inline mr-2" />
@@ -14,6 +15,7 @@ const productTabs: TabItem[] = [
     Component: ProductComponent.FindByUuidSegment,
   },
   {
+    id: 'findbrand',
     label: (
       <span>
         <Cat className="inline mr-2" />
@@ -23,6 +25,7 @@ const productTabs: TabItem[] = [
     Component: ProductComponent.FindAllProductsByBrandSegment,
   },
   {
+    id: 'findcategory',
     label: (
       <span>
         <ChartBarStacked className="inline mr-2" />
@@ -32,6 +35,7 @@ const productTabs: TabItem[] = [
     Component: ProductComponent.FindAllProductsByCategorySegment,
   },
   {
+    id: 'findname',
     label: (
       <span>
         <ALargeSmall className="inline mr-2" />
@@ -43,14 +47,18 @@ const productTabs: TabItem[] = [
 ];
 
 const ProductPage = () => {
-  const [selection, setSelection] = useState(0);
+  const [selection, setSelection] = useState('finduuid');
   return (
-    <div className="w-full flex pt-5 pl-20">
+    <div className="w-full flex pt-5 pl-2 md:pl-20">
       <div className="w-full md:w-1/5">
-        <TabComponent.TabsNav tabs={productTabs} current={selection} onSelect={setSelection} />
+        <TabComponent.VerticalTabsNav
+          tabs={productTabs}
+          currentId={selection}
+          onSelect={setSelection}
+        />
       </div>
-      <div className="w-full md:w-4/5 pl-8">
-        <TabComponent.TabsPanels tabs={productTabs} current={selection} />
+      <div className="w-full md:w-4/5 pl-2 md:pl-8">
+        <TabComponent.VerticalTabsPanels tabs={productTabs} currentId={selection} />
       </div>
     </div>
   );

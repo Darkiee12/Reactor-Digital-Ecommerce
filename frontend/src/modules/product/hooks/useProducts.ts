@@ -8,17 +8,13 @@ import ProductService from '../service/ProductApi';
 
 const useProducts = (
   finder: ProductsFinder,
+  page: number = 0,
   options?: UseQueryOptions<PageResponse<Product>, AxiosError<ErrorResponse>>
 ) => {
   return useQuery<PageResponse<Product>, AxiosError<ErrorResponse>>({
-    queryKey: ['products', finder.type, finder.value],
-    queryFn: async () => {
-      const result = await ProductService.getProducts(finder);
-      if (result.status !== 200) {
-        throw new Error('Error fetching products');
-      }
-      return result.data;
-    },
+    queryKey: ['products', finder.type, finder.value, page],
+    queryFn: () => ProductService.getProducts(finder).then(result => result.data),
+    enabled: !!finder.value,
     ...options,
   });
 };

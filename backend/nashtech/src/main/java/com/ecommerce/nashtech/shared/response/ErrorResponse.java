@@ -1,13 +1,11 @@
 package com.ecommerce.nashtech.shared.response;
 
-import java.net.http.HttpResponse;
 import java.time.Instant;
 
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 
 import com.ecommerce.nashtech.shared.error.BaseError;
-import com.ecommerce.nashtech.shared.json.JSON;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

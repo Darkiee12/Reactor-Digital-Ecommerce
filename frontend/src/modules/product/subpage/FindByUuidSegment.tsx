@@ -68,14 +68,18 @@ const FindByUuidSegment: React.FC = () => {
                   <Input
                     {...field}
                     placeholder="Find a product with their uuid"
-                    className="focus-visible:border-2 focus-visible:border-blue-600 bg-[#151b23]"
+                    className="focus-visible:border-2 focus-visible:border-blue-600 "
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button type="submit" variant="ghost" className="bg-[#238636] px-4 py-4">
+          <Button
+            type="submit"
+            variant="default"
+            className="dark:bg-green-600 bg-green-400 px-4 py-4"
+          >
             <Search /> Search
           </Button>
         </form>
@@ -172,7 +176,7 @@ const ProductRenderer = ({ product }: { product: Product }) => {
                   <Input
                     placeholder="Enter product name"
                     {...field}
-                    className="focus-visible:border-2 focus-visible:border-blue-600 bg-[#151b23] text-white"
+                    className="focus-visible:border-2 focus-visible:border-blue-600 "
                   />
                 </FormControl>
                 <FormMessage />
@@ -189,7 +193,7 @@ const ProductRenderer = ({ product }: { product: Product }) => {
                   <Input
                     placeholder="Enter brand name"
                     {...field}
-                    className="focus-visible:border-2 focus-visible:border-blue-600 bg-[#151b23] text-white"
+                    className="focus-visible:border-2 focus-visible:border-blue-600 "
                   />
                 </FormControl>
                 <FormMessage />
@@ -206,7 +210,7 @@ const ProductRenderer = ({ product }: { product: Product }) => {
                   <Textarea
                     placeholder="Enter product description"
                     {...field}
-                    className="focus-visible:border-2 focus-visible:border-blue-600 bg-[#151b23] text-white"
+                    className="focus-visible:border-2 focus-visible:border-blue-600 "
                   />
                 </FormControl>
                 <FormMessage />
@@ -226,7 +230,7 @@ const ProductRenderer = ({ product }: { product: Product }) => {
                     step="0.01"
                     placeholder="Enter price"
                     {...field}
-                    className="focus-visible:border-2 focus-visible:border-blue-600 bg-[#151b23] text-white"
+                    className="focus-visible:border-2 focus-visible:border-blue-600 "
                   />
                 </FormControl>
                 <FormMessage />
@@ -245,7 +249,7 @@ const ProductRenderer = ({ product }: { product: Product }) => {
                     type="number"
                     placeholder="Enter stock quantity"
                     {...field}
-                    className="focus-visible:border-2 focus-visible:border-blue-600 bg-[#151b23] text-white"
+                    className="focus-visible:border-2 focus-visible:border-blue-600 "
                   />
                 </FormControl>
                 <FormMessage />
@@ -263,7 +267,7 @@ const ProductRenderer = ({ product }: { product: Product }) => {
                   <Input
                     placeholder="Enter categories (e.g., electronics, gadgets)"
                     value={field.value.join(', ')}
-                    className="focus-visible:border-2 focus-visible:border-blue-600 bg-[#151b23] text-white"
+                    className="focus-visible:border-2 focus-visible:border-blue-600 "
                   />
                 </FormControl>
                 <FormMessage />
@@ -275,7 +279,7 @@ const ProductRenderer = ({ product }: { product: Product }) => {
             type="submit"
             variant="ghost"
             disabled={form.formState.isSubmitting}
-            className="mt-4 bg-[#238636] text-white"
+            className="mt-4 dark:bg-green-600 bg-green-400"
           >
             {form.formState.isSubmitting ? 'Updating...' : 'Update Product'}
           </Button>

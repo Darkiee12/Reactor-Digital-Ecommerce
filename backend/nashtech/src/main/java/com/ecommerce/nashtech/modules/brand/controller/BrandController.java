@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.data.domain.Pageable;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -107,10 +106,26 @@ public class BrandController implements IBrandController {
         return filePart
                 .flatMap(file -> brandService.uploadImage(brandId, file, altText))
                 .map(image -> SuccessfulResponse.WithMessage.builder()
-                        .message("Brand image has been updated successfully.").instance(instance)
+                        .message("Brand image has been updated successfully.")
+                        .instance(instance)
                         .build().asResponse())
                 .onErrorResume(ProductError.class,
                         e -> ErrorResponse.build(e, instance).asMonoResponse());
+    }
+
+    @Override
+    @GetMapping("/search")
+    public Mono<ResponseEntity<String>> search(@RequestParam String searchTerm,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        var instance = router.getURI("search");
+        Pageable pageable = PageRequest.of(page, size);
+        return brandService.search(searchTerm, pageable)
+                .collectList()
+                .zipWith(brandService.countByNameContainingIgnoreCase(searchTerm))
+                .map(tuple -> new PageImpl<>(tuple.getT1(), pageable, tuple.getT2()))
+                .map(brandPage -> SuccessfulResponse.WithPageableData.of(brandPage, instance)
+                        .asResponse());
     }
 
 }

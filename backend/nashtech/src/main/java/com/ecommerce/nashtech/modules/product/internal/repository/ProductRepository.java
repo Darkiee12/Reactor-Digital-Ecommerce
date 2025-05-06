@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.ecommerce.nashtech.modules.product.dto.ProductBrandCountDto;
+import com.ecommerce.nashtech.modules.product.internal.projection.ProductIdProjection;
 import com.ecommerce.nashtech.modules.product.model.Product;
 
 import reactor.core.publisher.Flux;
@@ -59,11 +60,11 @@ public interface ProductRepository extends R2dbcRepository<Product, Long> {
 
     Mono<Boolean> existsByName(String name);
 
-    Flux<Product> findByNameStartingWithIgnoreCase(String namePrefix);
+    Flux<ProductIdProjection> findByNameStartingWithIgnoreCase(String namePrefix);
 
     Mono<Long> countByNameStartingWithIgnoreCase(String namePrefix);
 
-    Flux<Product> findByNameContainingIgnoreCase(String searchTerm, Pageable pageable);
+    Flux<ProductIdProjection> findByNameContainingIgnoreCase(String searchTerm, Pageable pageable);
 
     Mono<Long> countByNameContainingIgnoreCase(String searchTerm);
 }
