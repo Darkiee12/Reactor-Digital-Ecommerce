@@ -1,0 +1,17 @@
+.PhoneInputCountry {
+  color: black;
+}
+
+.PhoneInputInput:focus-visible {
+  border-width: 2px;
+  border-color: #2563eb;
+  border-style: solid;
+}
+
+/* [data-slot='command-input-wrapper'] {
+  background-color: #151b23;
+} */
+
+/* .searchbar {
+ 
+} */

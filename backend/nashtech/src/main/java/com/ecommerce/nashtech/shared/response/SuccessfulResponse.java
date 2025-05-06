@@ -5,7 +5,9 @@ import java.util.List;
 import java.util.Objects;
 
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -30,7 +32,7 @@ public interface SuccessfulResponse extends BaseResponse {
     @Builder
     @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
     @Data
-    public static final class WithData<T> implements SuccessfulResponse {
+    public static class WithData<T> implements SuccessfulResponse {
         T item;
         String instance;
         String timestamp;
@@ -54,7 +56,7 @@ public interface SuccessfulResponse extends BaseResponse {
 
     @FieldDefaults(level = AccessLevel.PRIVATE)
     @Data
-    public final class WithPageableData<T> implements SuccessfulResponse {
+    public class WithPageableData<T> implements SuccessfulResponse {
 
         @Data
         @FieldDefaults(level = AccessLevel.PRIVATE)

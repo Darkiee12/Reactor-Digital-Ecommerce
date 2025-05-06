@@ -1,29 +1,25 @@
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import UserService from '../service/UserApi';
-import { setError } from '@/modules/error/state/ErrorSlice';
+import UserService from '@/modules/user/service/UserApi';
 import ErrorResponse from '@/modules/error/model/Error';
-import { setAccessToken } from '../state/AuthSlice';
-import { setUser } from '../state/UserSlice';
+import { setAccessToken } from '@/modules/user/state/AuthSlice';
+import { setUser } from '@/modules/user/state/UserSlice';
 import store from '@/store';
+import { AxiosError } from 'axios';
 const useRefreshToken = () =>
   useMutation({
-    mutationFn: () => UserService.refreshAccessToken(),
-    onSuccess: async res => {
-      if (res.ok) {
-        const accessToken = res.val.data.item;
-        store.dispatch(setAccessToken(accessToken));
-        const response = await UserService.getCurrentUser();
-        if (response.ok) {
-          const user = response.val.data.item;
-          store.dispatch(setUser(user));
-        } else {
-          store.dispatch(setError(response.val.response?.data as ErrorResponse));
-          return;
-        }
-      } else {
-        setError(res.val.response?.data as ErrorResponse);
-      }
+    mutationFn: async () => {
+      const res = await UserService.refreshAccessToken();
+      const accessToken = res.data.item;
+      store.dispatch(setAccessToken(accessToken));
+
+      const response = await UserService.getCurrentUser();
+      const user = response.data.item;
+      store.dispatch(setUser(user));
+
+      return accessToken;
+    },
+    onError: (error: AxiosError<ErrorResponse>) => {
+      console.error('Error refreshing token:', error.response?.data);
     },
   });
 

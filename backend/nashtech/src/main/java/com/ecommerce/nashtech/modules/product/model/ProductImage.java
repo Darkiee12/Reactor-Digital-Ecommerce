@@ -1,30 +1,34 @@
 package com.ecommerce.nashtech.modules.product.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
-
-import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 @Table("product_image")
+
 public class ProductImage {
 
     @Id
     @Column("id")
     Long id;
 
-    @Column("product_id")
-    Long productId;
+    @Column("product_uuid")
+    UUID productUuid;
 
-    @Column("image_id")
-    Long imageId;
+    @Column("image_uuid")
+    UUID imageUuid;
 
     @Column("created_at")
-    LocalDateTime createdAt = LocalDateTime.now();
+    Long createdAt;
 }

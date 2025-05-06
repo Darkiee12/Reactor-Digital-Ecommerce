@@ -1,5 +1,7 @@
 package com.ecommerce.nashtech.modules.product.internal.repository;
 
+import java.util.UUID;
+
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,9 +12,9 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface ProductImageRepository extends R2dbcRepository<ProductImage, Long> {
 
-    Flux<ProductImage> findByProductId(Long productId);
+    Flux<ProductImage> findAllByProductUuid(UUID productUuid);
 
-    Flux<ProductImage> findByImageId(Long imageId);
+    Flux<ProductImage> findByImageUuid(UUID imageUuid);
 
-    Mono<Void> deleteByProductIdAndImageId(Long productId, Long imageId);
+    Mono<Void> deleteByProductUuidAndImageUuid(UUID productUuid, UUID imageUuid);
 }

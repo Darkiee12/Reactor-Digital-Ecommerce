@@ -1,12 +1,15 @@
 package com.ecommerce.nashtech.modules.product.internal.repository;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.ecommerce.nashtech.modules.product.dto.ProductBrandCountDto;
 import com.ecommerce.nashtech.modules.product.model.Product;
 
 import reactor.core.publisher.Flux;
@@ -40,9 +43,27 @@ public interface ProductRepository extends R2dbcRepository<Product, Long> {
             """)
     Mono<Long> countByBrandId(Long id);
 
+    @Query("""
+                SELECT P.*
+                FROM products AS p
+                INNER JOIN categories AS c
+                ON p.category_id = c.id
+                WHERE c.id = :id
+                LIMIT :limit OFFSET :offset
+            """)
+    Flux<Product> findAllByCategory(Long id, int limit, int offset);
+
     Mono<Boolean> existsById(Long id);
 
     Mono<Boolean> existsByUuid(UUID uuid);
 
     Mono<Boolean> existsByName(String name);
+
+    Flux<Product> findByNameStartingWithIgnoreCase(String namePrefix);
+
+    Mono<Long> countByNameStartingWithIgnoreCase(String namePrefix);
+
+    Flux<Product> findByNameContainingIgnoreCase(String searchTerm, Pageable pageable);
+
+    Mono<Long> countByNameContainingIgnoreCase(String searchTerm);
 }

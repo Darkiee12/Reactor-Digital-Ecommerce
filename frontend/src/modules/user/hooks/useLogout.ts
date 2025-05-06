@@ -5,16 +5,18 @@ import { clearUser } from '../state/UserSlice';
 import store from '@/store';
 import { setError } from '@/modules/error/state/ErrorSlice';
 import ErrorResponse from '@/modules/error/model/Error';
-const useLogout = () =>
-  useMutation({
+const useLogout = () => {
+  return useMutation({
     mutationFn: () => UserService.logout(),
     onSuccess: () => {
       store.dispatch(clearUser());
       store.dispatch(clearAccessToken());
+      window.location.href = '/';
     },
     onError: (error: ErrorResponse) => {
       store.dispatch(setError(error));
     },
   });
+};
 
 export default useLogout;

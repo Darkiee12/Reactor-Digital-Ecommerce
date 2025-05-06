@@ -1,5 +1,28 @@
 package com.ecommerce.nashtech.modules.account.controller;
 
+import java.time.Duration;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+
+import org.springframework.security.authentication.ReactiveAuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.http.HttpCookie;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.web.server.ServerWebExchange;
+
 import com.ecommerce.nashtech.modules.account.dto.SignInDto;
 import com.ecommerce.nashtech.modules.account.error.AccountError;
 import com.ecommerce.nashtech.modules.account.service.AccountService;
@@ -10,28 +33,12 @@ import com.ecommerce.nashtech.shared.response.ErrorResponse;
 import com.ecommerce.nashtech.shared.response.SuccessfulResponse;
 import com.ecommerce.nashtech.shared.types.Option;
 import com.ecommerce.nashtech.shared.util.Router;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.http.HttpCookie;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.ReactiveAuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.support.WebExchangeBindException;
-import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-
-import java.time.Duration;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -111,6 +118,36 @@ public class AccountController implements IAccountController {
                 .instance(instance)
                 .build()
                 .asMonoResponse();
+    }
+
+    @Override
+    @GetMapping("/exists/username/{username}")
+    public Mono<ResponseEntity<String>> usernameExists(ServerWebExchange exchange, @PathVariable String username) {
+        String instance = router.getURI("exists", "username", username);
+        var finder = new UserFinder.ByUsername(username);
+        return accountService
+                .exists(finder)
+                .map(exists -> SuccessfulResponse.WithMessage.builder()
+                        .message(exists ? "Username exists" : "Username does not exist")
+                        .instance(instance)
+                        .build()
+                        .asResponse())
+                .onErrorResume(AccountError.class, e -> ErrorResponse.build(e, instance).asMonoResponse());
+    }
+
+    @Override
+    @GetMapping("/exists/email/{email}")
+    public Mono<ResponseEntity<String>> emailExists(ServerWebExchange exchange, @PathVariable String email) {
+        String instance = router.getURI("exists", "email", email);
+        var finder = new UserFinder.ByEmail(email);
+        return accountService
+                .exists(finder)
+                .map(exists -> SuccessfulResponse.WithMessage.builder()
+                        .message(exists ? "Email exists" : "email does not exist")
+                        .instance(instance)
+                        .build()
+                        .asResponse())
+                .onErrorResume(AccountError.class, e -> ErrorResponse.build(e, instance).asMonoResponse());
     }
 
     // ==== Private helper methods ====

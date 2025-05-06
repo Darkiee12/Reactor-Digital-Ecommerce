@@ -2,9 +2,9 @@ package com.ecommerce.nashtech.modules.brand.controller;
 
 import com.ecommerce.nashtech.modules.brand.dto.UpdateBrandDto;
 import com.ecommerce.nashtech.modules.brand.error.BrandError;
-import com.ecommerce.nashtech.modules.brand.dto.BrandDto;
+import com.ecommerce.nashtech.modules.brand.dto.CreateBrandDto;
 import com.ecommerce.nashtech.modules.brand.service.IBrandService;
-import com.ecommerce.nashtech.shared.config.PaginationConfiguration;
+import com.ecommerce.nashtech.modules.product.error.ProductError;
 import com.ecommerce.nashtech.shared.response.ErrorResponse;
 import com.ecommerce.nashtech.shared.response.SuccessfulResponse;
 import com.ecommerce.nashtech.shared.util.Router;
@@ -16,13 +16,18 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ServerWebExchange;
 import org.springframework.data.domain.Pageable;
+
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/brands")
+@RequestMapping("/api/v1/brands")
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
@@ -60,9 +65,10 @@ public class BrandController implements IBrandController {
 
     @Override
     @PostMapping
-    public Mono<ResponseEntity<String>> create(@RequestBody BrandDto dto) {
+    public Mono<ResponseEntity<String>> create(@RequestBody Mono<CreateBrandDto> dto) {
         var instance = router.getURI("");
-        return brandService.create(dto)
+
+        return dto.flatMap(brandService::create)
                 .map(brand -> SuccessfulResponse.WithData.builder().item(brand).instance(instance)
                         .build().asResponse())
                 .onErrorResume(BrandError.class,
@@ -89,4 +95,22 @@ public class BrandController implements IBrandController {
                 .onErrorResume(BrandError.class,
                         e -> ErrorResponse.build(e, instance).asMonoResponse());
     }
+
+    @Override
+    @PostMapping(value = "{brandId}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Mono<ResponseEntity<String>> uploadBrandImage(
+            ServerWebExchange exchange,
+            @RequestPart("file") Mono<FilePart> filePart,
+            @PathVariable Long brandId,
+            @RequestPart("altText") String altText) {
+        var instance = router.getURI(brandId, "image");
+        return filePart
+                .flatMap(file -> brandService.uploadImage(brandId, file, altText))
+                .map(image -> SuccessfulResponse.WithMessage.builder()
+                        .message("Brand image has been updated successfully.").instance(instance)
+                        .build().asResponse())
+                .onErrorResume(ProductError.class,
+                        e -> ErrorResponse.build(e, instance).asMonoResponse());
+    }
+
 }

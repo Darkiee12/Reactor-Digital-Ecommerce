@@ -72,20 +72,20 @@ public class UserService implements IUserService {
         return Mono.zip(phoneNumber, address).flatMap(tuple -> {
             var phoneNum = tuple.getT1();
             var addr = tuple.getT2();
-            var user = new User();
             var accountDto = dto.toAccountDto();
             return accountService.create(accountDto).map(account -> {
-                user.setId(account.getId());
-                user.setPhoneNumber(phoneNum);
-                user.setAddress(addr);
-                user.setFirstName(dto.firstName());
-                user.setLastName(dto.lastName());
-                user.setMiddleName(dto.middleName());
-                user.setGender(dto.gender());
-                user.setCreatedAt(Instant.now().toEpochMilli());
-                user.setUpdatedAt(Instant.now().toEpochMilli());
-                user.setDeleted(false);
-                return user;
+                return User.builder()
+                        .id(account.getId())
+                        .phoneNumber(phoneNum)
+                        .address(addr)
+                        .firstName(dto.firstName())
+                        .lastName(dto.lastName())
+                        .middleName(dto.middleName())
+                        .gender(dto.gender())
+                        .createdAt(Instant.now().toEpochMilli())
+                        .updatedAt(Instant.now().toEpochMilli())
+                        .deleted(false)
+                        .build();
             }).flatMap(u -> template.insert(User.class).using(u)).as(txOperator::transactional);
         });
     }
@@ -93,21 +93,20 @@ public class UserService implements IUserService {
     @Override
     public Mono<User> unsafeCreate(CreateUserDto dto) {
         return accountService.create(dto.toAccountDto()).map(account -> {
-            var user = new User();
-            user.setId(account.getId());
-            user.setPhoneNumber(dto.phoneNumber());
-            user.setAddress(dto.address());
-            user.setFirstName(dto.firstName());
-            user.setLastName(dto.lastName());
-            user.setMiddleName(dto.middleName());
-            user.setGender(dto.gender());
-            user.setPhoneNumber(dto.phoneNumber());
-            user.setAddress(dto.address());
-            user.setCreatedAt(Instant.now().toEpochMilli());
-            user.setUpdatedAt(Instant.now().toEpochMilli());
-            user.setDeleted(false);
+
             roleService.assignDefaultRole(account.getId());
-            return user;
+            return User.builder()
+                    .id(account.getId())
+                    .phoneNumber(dto.phoneNumber())
+                    .address(dto.address())
+                    .firstName(dto.firstName())
+                    .lastName(dto.lastName())
+                    .middleName(dto.middleName())
+                    .gender(dto.gender())
+                    .createdAt(Instant.now().toEpochMilli())
+                    .updatedAt(Instant.now().toEpochMilli())
+                    .deleted(false)
+                    .build();
         }).flatMap(u -> template.insert(User.class).using(u)).as(txOperator::transactional);
     }
 

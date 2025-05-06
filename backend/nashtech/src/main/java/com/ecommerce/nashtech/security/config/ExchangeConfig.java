@@ -46,6 +46,9 @@ public class ExchangeConfig implements Consumer<AuthorizeExchangeSpec> {
                 .pathMatchers(HttpMethod.DELETE, router.getURI("users", "email", "{email}"))
                 .access((authentication, context) -> CommonAuthorizationDecision.User.build(authentication, context)
                         .byEmail())
+                .pathMatchers(HttpMethod.PATCH, router.getURI("products", "uuid", "{uuid}"))
+                .access((authentication, context) -> CommonAuthorizationDecision.User.build(authentication, context)
+                        .byUUid())
                 .anyExchange().permitAll();
     }
 

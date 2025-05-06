@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 
@@ -14,10 +15,14 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import com.ecommerce.nashtech.modules.brand.dto.BrandDto;
+import com.ecommerce.nashtech.modules.brand.dto.CreateBrandDto;
 import com.ecommerce.nashtech.modules.brand.dto.UpdateBrandDto;
 import com.ecommerce.nashtech.modules.brand.error.BrandError;
 import com.ecommerce.nashtech.modules.brand.internal.repository.BrandRepository;
 import com.ecommerce.nashtech.modules.brand.model.Brand;
+import com.ecommerce.nashtech.modules.image.service.ImageService;
+import com.ecommerce.nashtech.modules.product.dto.ProductBrandCountDto;
+import com.ecommerce.nashtech.modules.product.service.IProductService;
 import com.ecommerce.nashtech.shared.types.Option;
 
 @Slf4j
@@ -26,8 +31,10 @@ import com.ecommerce.nashtech.shared.types.Option;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class BrandService implements IBrandService {
     BrandRepository brandRepo;
+    IProductService productService;
     R2dbcEntityTemplate template;
     TransactionalOperator txOperator;
+    ImageService imageService;
 
     private Mono<Brand> findById(Long id) {
         return brandRepo.findById(id)
@@ -41,21 +48,41 @@ public class BrandService implements IBrandService {
 
     @Override
     public Mono<BrandDto> findDtoById(Long id) {
-        return findById(id)
-                .map(BrandDto::from);
+        var productCount = productService.countByBrand(id);
+        // var productDistinctCount = productService.countDistinctByBrand(id);
+        var brandMono = findById(id);
+        return Mono.zip(brandMono, productCount
+        // , productDistinctCount
+        )
+                .map(tuple -> {
+                    var brand = tuple.getT1();
+                    var count = tuple.getT2();
+                    // var distinctCount = tuple.getT3();
+                    return BrandDto.from(brand, count);
+                });
     }
 
     @Override
     public Flux<BrandDto> findAll(Pageable pageable) {
-        return brandRepo.findAllBy(pageable).map(BrandDto::from);
+        return brandRepo.findAllBy(pageable)
+                .collectList()
+                .flatMapMany(brands -> {
+                    var brandIds = brands.stream().map(Brand::getId).toList();
+                    return productService.countByBrandIds(brandIds)
+                            .collectMap(ProductBrandCountDto::brandId, ProductBrandCountDto::count)
+                            .flatMapMany(countMap -> Flux.fromIterable(brands)
+                                    .map(brand -> {
+                                        Long productCount = countMap.getOrDefault(brand.getId(), 0L);
+
+                                        return BrandDto.from(brand, productCount);
+                                    }));
+
+                });
     }
 
     @Override
-    public Mono<Brand> create(BrandDto dto) {
-        Brand brand = new Brand();
-        brand.setName(dto.name());
-        return template.insert(Brand.class)
-                .using(brand)
+    public Mono<Brand> create(CreateBrandDto dto) {
+        return brandRepo.save(Brand.builder().name(dto.name()).build())
                 .as(txOperator::transactional);
     }
 
@@ -70,4 +97,13 @@ public class BrandService implements IBrandService {
                 .flatMap(brandRepo::delete)
                 .as(txOperator::transactional);
     }
+
+    @Override
+    public Mono<Void> uploadImage(Long id, FilePart logo, String altText) {
+        return findById(id)
+                .map(brand -> imageService.uploadImage(logo, altText, brand.getId().toString()))
+                .then();
+
+    }
+
 }

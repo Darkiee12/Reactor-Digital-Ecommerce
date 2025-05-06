@@ -7,12 +7,14 @@ import lombok.Builder;
 @Builder
 public record BrandDto(
         String name,
-        String logo) {
+        String logo,
+        Long count) {
 
-    public static BrandDto from(Brand brand) {
+    public static BrandDto from(Brand brand, Long totalProductCount) {
         return new BrandDto(
                 brand.getName(),
-                null
+                null,
+                totalProductCount
         // brand.getLogo() //TODO: Implement logo handling
         );
     }
