@@ -20,7 +20,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 const AccountSegment = () => {
   return (
-    <div className="flex flex-col gap-y-5 w-full">
+    <div className="px-8 flex flex-col gap-y-5 w-full">
       <AccountIdentity />
       <AccountAmendmentSegment />
       <PasswordAmendmentSegment />
@@ -31,7 +31,7 @@ const AccountSegment = () => {
 const AccountIdentity = () => {
   const user = useSelector((state: RootState) => state.user.currentUser)!;
   return (
-    <div id="account" className="w-full px-4">
+    <div id="account" className="w-full">
       <p className="text-2xl border-b border-b-[#3D444D] pb-2">Your account identity</p>
       <p>UUID: {user.uuid}</p>
     </div>
@@ -82,7 +82,7 @@ const AccountAmendmentSegment = () => {
   };
 
   return (
-    <div id="account" className="w-full px-4">
+    <div id="account" className="w-full">
       <p className="text-2xl border-b border-b-[#3D444D] pb-2">Your account information</p>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -166,7 +166,7 @@ export const PasswordAmendmentSegment = () => {
   };
 
   return (
-    <div className="w-full px-4">
+    <div className="w-full">
       <p className="text-2xl border-b border-b-[#3D444D] pb-2">Change Password</p>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="">

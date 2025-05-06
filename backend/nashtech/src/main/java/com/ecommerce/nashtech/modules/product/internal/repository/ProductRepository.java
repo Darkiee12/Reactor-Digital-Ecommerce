@@ -3,6 +3,7 @@ package com.ecommerce.nashtech.modules.product.internal.repository;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.repository.query.Param;
@@ -57,4 +58,12 @@ public interface ProductRepository extends R2dbcRepository<Product, Long> {
     Mono<Boolean> existsByUuid(UUID uuid);
 
     Mono<Boolean> existsByName(String name);
+
+    Flux<Product> findByNameStartingWithIgnoreCase(String namePrefix);
+
+    Mono<Long> countByNameStartingWithIgnoreCase(String namePrefix);
+
+    Flux<Product> findByNameContainingIgnoreCase(String searchTerm, Pageable pageable);
+
+    Mono<Long> countByNameContainingIgnoreCase(String searchTerm);
 }

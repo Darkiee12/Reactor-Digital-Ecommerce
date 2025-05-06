@@ -1,11 +1,14 @@
 package com.ecommerce.nashtech.modules.brand.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.ecommerce.nashtech.modules.brand.dto.BrandDto;
+import com.ecommerce.nashtech.modules.brand.dto.CreateBrandDto;
 import com.ecommerce.nashtech.modules.brand.dto.UpdateBrandDto;
 import com.ecommerce.nashtech.shared.response.ErrorResponse;
 import com.ecommerce.nashtech.shared.response.SuccessfulResponse;
@@ -51,7 +54,7 @@ public interface IBrandController {
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
     Mono<ResponseEntity<String>> create(
-            @RequestBody BrandDto dto);
+            @RequestBody Mono<CreateBrandDto> dto);
 
     @Operation(summary = "Update brand", description = "Update an existing brand")
     @ApiResponses(value = {
@@ -75,4 +78,19 @@ public interface IBrandController {
     })
     Mono<ResponseEntity<String>> delete(
             @Parameter(description = "ID of the brand to delete", required = true, schema = @Schema(type = "integer", format = "int64")) @PathVariable Long id);
+
+    @Operation(summary = "Upload brand image", description = "Upload an image for a brand")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Image uploaded successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessfulResponse.WithMessage.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Brand not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "Unprocessable entity", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    Mono<ResponseEntity<String>> uploadBrandImage(
+            ServerWebExchange exchange,
+            @RequestPart("file") Mono<FilePart> filePart,
+            @PathVariable Long brandId,
+            @RequestPart("altText") String altText);
 }

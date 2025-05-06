@@ -59,12 +59,12 @@ const ProfileSegment = () => {
     });
   };
   return (
-    <div id="profile" className="w-full px-4">
+    <div id="profile" className="w-full px-8">
       <p className="text-2xl border-b border-b-[#3D444D] pb-2">Public profile</p>
-      <div className="w-full flex pt-2">
-        <div className="w-2/3 px-4">
+      <div className="w-full flex">
+        <div className="w-2/3 pr-8">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-y-5">
               <FormField
                 control={form.control}
                 name="fullName"

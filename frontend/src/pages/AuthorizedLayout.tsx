@@ -13,51 +13,40 @@ import { RootState } from '@/store';
 const AuthorizedLayout = () => {
   const location = useLocation();
   const user = useSelector((state: RootState) => state.user.currentUser)!;
+  const navItems = [
+    { to: '/profile', Icon: ProfileIcon, label: 'Profile' },
+    { to: '/users', Icon: UserManagementIcon, label: 'User' },
+    { to: '/products', Icon: ProductManagementIcon, label: 'Product' },
+    { to: '/brands', Icon: BrandManagementIcon, label: 'Brand' },
+    { to: '/categories', Icon: CategoryManagementIcon, label: 'Category' },
+  ];
+
   return (
     <main className="w-full text-white">
-      <div className="w-full flex gap-4 px-4 border-b border-[#3D444D] bg-black mb-2">
-        <Link
-          to="/profile"
-          className={`flex gap-x-1 py-2 px-1 ${
-            location.pathname === '/profile' && 'border-b border-[#F78166]'
-          }`}
-        >
-          <ProfileIcon /> Profile
-        </Link>
-        <Link
-          to="/users"
-          className={`flex gap-x-1 py-2 px-1 ${
-            location.pathname === '/users' && 'border-b border-[#F78166]'
-          }`}
-        >
-          <UserManagementIcon /> User Management
-        </Link>
-        <Link
-          to="/products"
-          className={`flex gap-x-1 py-2 px-1 ${
-            location.pathname === '/products' && 'border-b border-[#F78166]'
-          }`}
-        >
-          <ProductManagementIcon /> Product Management
-        </Link>
-        <Link
-          to="/brands"
-          className={`flex gap-x-1 py-2 px-1 ${
-            location.pathname === '/brands' && 'border-b border-[#F78166]'
-          }`}
-        >
-          <BrandManagementIcon /> Brand Management
-        </Link>
-        <Link
-          to="/categories"
-          className={`flex gap-x-1 py-2 px-1 ${
-            location.pathname === '/categories' && 'border-b border-[#F78166]'
-          }`}
-        >
-          <CategoryManagementIcon /> Category Management
-        </Link>
+      <div className="w-full flex gap-6 px-8 border-b border-[#3D444D] bg-black mb-2">
+        {navItems.map(({ to, Icon, label }) => {
+          const isActive = location.pathname === to;
+          return (
+            <div
+              key={to}
+              className={`transition-all duration-200 ease-in-out ${
+                isActive ? 'border-b-2 border-[#F78166] font-bold text-white' : 'text-gray-300'
+              }`}
+            >
+              <Link
+                to={to}
+                className="rounded-xl flex gap-x-1 py-2 px-2 hover:bg-gray-800 hover:text-white"
+              >
+                <Icon /> {label}
+              </Link>
+            </div>
+          );
+        })}
       </div>
-      <ProfileHeader user={user} />
+      <div className="pl-20">
+        <ProfileHeader user={user} />
+      </div>
+
       <Outlet />
     </main>
   );

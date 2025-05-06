@@ -30,10 +30,7 @@ api.interceptors.response.use(
 );
 
 const refreshAccessToken = async () => {
-  return await Result.wrapAsync<
-    AxiosResponse<DataResponse<AccessToken>, any>,
-    AxiosError<ErrorResponse>
-  >(() => api.get<DataResponse<AccessToken>>('/auth/refresh'));
+  return await api.get<DataResponse<AccessToken>>('/auth/refresh');
 };
 
 const login = async (user: LoginInput) => {
@@ -44,9 +41,7 @@ const login = async (user: LoginInput) => {
 };
 
 const getCurrentUser = async () => {
-  return await Result.wrapAsync<AxiosResponse<DataResponse<User>, any>, AxiosError<ErrorResponse>>(
-    async () => await api.get<DataResponse<User>>('users/me')
-  );
+  return await api.get<DataResponse<User>>('users/me');
 };
 
 const logout = async () => {

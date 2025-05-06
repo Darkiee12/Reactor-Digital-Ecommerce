@@ -16,17 +16,14 @@ const useLogin = () => {
         const accessToken = res.val.data.item;
         store.dispatch(setAccessToken(accessToken));
         const response = await UserService.getCurrentUser();
-        if (response.ok) {
-          const user = response.val.data.item;
-          store.dispatch(setUser(user));
-          navigate('/profile');
-        } else {
-          store.dispatch(setError(response.val.response?.data as ErrorResponse));
-          return;
-        }
+        store.dispatch(setUser(response.data.item));
+        navigate('/profile');
       } else {
         store.dispatch(setError(res.val.response?.data as ErrorResponse));
       }
+    },
+    onError: (error: ErrorResponse) => {
+      store.dispatch(setError(error));
     },
   });
 };

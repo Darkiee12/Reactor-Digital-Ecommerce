@@ -16,7 +16,7 @@ const selectCurrentUser = (state: RootState) => state.user.currentUser;
 
 const Logo = () => {
   return (
-    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow">
+    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow">
       <img src="/logo.png" alt="logo icon" className="object-contain" />
     </div>
   );
@@ -27,7 +27,7 @@ const ProfileButton: React.FC = () => {
   const user = useSelector(selectCurrentUser);
   return (
     user && (
-      <Avatar className="bg-white rounded-full w-12 h-12">
+      <Avatar className="bg-white rounded-full w-8 h-8">
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-1">
             <AvatarImage src="/profile.png" alt="@shadcn" />
@@ -54,10 +54,10 @@ const ProfileButton: React.FC = () => {
 const Navbar: React.FC = () => {
   return (
     <div className="w-full bg-black text-white">
-      <div className="flex items-center px-4 py-4">
+      <div className="flex items-center px-4 pt-4 pb-2">
         <div className="flex items-center">
           <Logo />
-          <p className="px-5 text-2xl">Admin Dashboard</p>
+          <p className="ml-4 font-bold">Admin Dashboard</p>
         </div>
         <div className="flex-grow" />
         <ProfileButton />

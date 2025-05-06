@@ -8,8 +8,10 @@ import com.ecommerce.nashtech.modules.image.service.ImageService;
 import com.ecommerce.nashtech.modules.product.dto.FullProductDto;
 import com.ecommerce.nashtech.modules.product.dto.ProductBrandCountDto;
 import com.ecommerce.nashtech.modules.product.dto.ProductCategoryCountDto;
+import com.ecommerce.nashtech.modules.product.dto.UpdateProductDto;
 import com.ecommerce.nashtech.modules.product.error.ProductError;
 import com.ecommerce.nashtech.modules.product.internal.repository.ProductRepository;
+import com.ecommerce.nashtech.modules.product.internal.patch.ProductPatcher;
 import com.ecommerce.nashtech.modules.product.internal.repository.ProductCategoryRepository;
 import com.ecommerce.nashtech.modules.product.internal.repository.ProductImageRepository;
 import com.ecommerce.nashtech.modules.product.model.Product;
@@ -20,6 +22,7 @@ import com.ecommerce.nashtech.shared.types.Option;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.http.codec.multipart.FilePart;
@@ -47,6 +50,7 @@ public class ProductService implements IProductService {
     TransactionalOperator txOperator;
     R2dbcEntityTemplate template;
     ImageService imageService;
+    ProductPatcher productPatcher;
 
     @Override
     public Mono<Product> find(ProductFinder finder) {
@@ -200,6 +204,43 @@ public class ProductService implements IProductService {
     public Flux<Image> getImagesByUuids(Flux<UUID> imageUuids) {
         return imageUuids
                 .flatMap(imageService::getImageMetadata);
+    }
+
+    public Flux<Product> findProductsByNamePrefix(String namePrefix) {
+        if (namePrefix == null || namePrefix.trim().isEmpty()) {
+            return Flux.empty();
+        }
+        return productRepo.findByNameStartingWithIgnoreCase(namePrefix);
+    }
+
+    public Mono<Long> countByNamePrefix(String namePrefix) {
+        if (namePrefix == null || namePrefix.trim().isEmpty()) {
+            return Mono.just(0L);
+        }
+        return productRepo.countByNameStartingWithIgnoreCase(namePrefix);
+    }
+
+    public Flux<Product> findProducts(String searchTerm, Pageable pageable) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return Flux.empty();
+        }
+        return productRepo.findByNameContainingIgnoreCase(searchTerm, pageable);
+    }
+
+    public Mono<Long> countByName(String searchTerm) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return Mono.just(0L);
+        }
+        return productRepo.countByNameContainingIgnoreCase(searchTerm);
+    }
+
+    public Mono<Product> updateProduct(ProductFinder finder, UpdateProductDto updateProductDto) {
+        return find(finder)
+                .flatMap(product -> {
+                    productPatcher.patch(product, updateProductDto);
+                    return productRepo.save(product);
+                })
+                .as(txOperator::transactional);
     }
 
 }

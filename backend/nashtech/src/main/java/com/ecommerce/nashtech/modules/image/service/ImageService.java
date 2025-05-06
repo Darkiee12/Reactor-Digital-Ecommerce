@@ -46,20 +46,14 @@ public class ImageService {
     DataBufferFactory dataBufferFactory = new DefaultDataBufferFactory();
     int BUFFER_SIZE = 8192;
 
-    /**
-     * Uploads a single image to MinIO and saves metadata to PostgreSQL.
-     */
     public Mono<Image> uploadImage(FilePart filePart, String altText) {
         return processAndSave(filePart, altText);
     }
 
-    /**
-     * Uploads multiple images concurrently and saves their metadata.
-     *
-     * @param fileParts Flux of FilePart objects to upload
-     * @param altText   alternative text to apply to all images
-     * @return Flux emitting saved Image metadata
-     */
+    public Mono<Image> uploadImage(FilePart logo, String altText, String objectKey) {
+        return processAndSave(logo, altText, objectKey);
+    }
+
     public Flux<Image> uploadImages(Flux<FilePart> fileParts, String altText) {
         return fileParts.flatMap(part -> processAndSave(part, altText));
     }
@@ -113,6 +107,27 @@ public class ImageService {
         UUID uuid = UUID.randomUUID();
         String originalFilename = uuid.toString();
         String objectKey = uuid.toString();
+        return DataBufferUtils.join(filePart.content())
+                .flatMap(dataBuffer -> {
+                    byte[] bytes = new byte[dataBuffer.readableByteCount()];
+                    dataBuffer.read(bytes);
+                    DataBufferUtils.release(dataBuffer);
+                    return Mono.fromCallable(
+                            () -> handleUploadAndMetadata(bytes, originalFilename, mimeType, altText, uuid, objectKey))
+                            .subscribeOn(Schedulers.boundedElastic());
+                })
+                .flatMap(imageRepo::save)
+                .doOnSuccess(saved -> log.info("Uploaded image {} with key {}", saved.getId(), saved.getObjectKey()));
+    }
+
+    private Mono<Image> processAndSave(FilePart filePart, String altText, String objectKey) {
+
+        String mimeType = filePart.headers().getContentType() != null
+                ? filePart.headers().getContentType().toString()
+                : "application/octet-stream";
+
+        UUID uuid = UUID.randomUUID();
+        String originalFilename = uuid.toString();
         return DataBufferUtils.join(filePart.content())
                 .flatMap(dataBuffer -> {
                     byte[] bytes = new byte[dataBuffer.readableByteCount()];

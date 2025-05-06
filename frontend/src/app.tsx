@@ -17,31 +17,35 @@ export default function App() {
   const token = useSelector((state: RootState) => state.auth.accessToken);
   const user = useSelector((state: RootState) => state.user.currentUser);
   const navigate = useNavigate();
-  const [refreshLoading, setRefreshLoading] = useState(true);
   const location = useLocation();
   const refreshTokenMutation = useRefreshToken();
 
+  const [refreshLoading, setRefreshLoading] = useState(true);
+
   useEffect(() => {
     const refresh = async () => {
-      try {
-        console.log('refreshing token');
-        await refreshTokenMutation.mutateAsync();
-        console.log('token refreshed');
-      } catch (err) {
-        console.error('Refresh failed', err);
-      } finally {
-        setRefreshLoading(false);
+      if (!user && !token) {
+        try {
+          console.log('Refreshing token...');
+          await refreshTokenMutation.mutateAsync();
+          console.log('Token refreshed.');
+        } catch (err) {
+          console.error('Token refresh failed:', err);
+        }
       }
+      setRefreshLoading(false);
     };
 
     refresh();
   }, []);
 
   useEffect(() => {
-    if (!refreshLoading && !user) {
-      navigate('/', { replace: true });
-    } else if (location.pathname === '/') {
-      navigate('/profile', { replace: true });
+    if (!refreshLoading) {
+      if (!user) {
+        navigate('/', { replace: true });
+      } else if (location.pathname === '/') {
+        navigate('/profile', { replace: true });
+      }
     }
   }, [refreshLoading, user]);
 
@@ -51,7 +55,7 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Layout key={user?.uuid ?? 'guest'} />}>
+      <Route path="/" element={<Layout />}>
         {!token && <Route index element={<LoginPage />} />}
         {user && (
           <Route element={<AuthorizedLayout />}>

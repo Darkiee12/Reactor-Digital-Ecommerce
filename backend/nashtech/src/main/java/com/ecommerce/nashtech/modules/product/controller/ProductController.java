@@ -10,8 +10,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.ecommerce.nashtech.modules.image.model.Image;
+import com.ecommerce.nashtech.modules.product.dto.UpdateProductDto;
 import com.ecommerce.nashtech.modules.product.error.ProductError;
 import com.ecommerce.nashtech.modules.product.service.ProductService;
 import com.ecommerce.nashtech.shared.enums.ProductFinder;
@@ -119,7 +122,7 @@ public class ProductController implements IProductController {
                         e -> ErrorResponse.build(e, instance).asMonoResponse());
     }
 
-    @PostMapping(value = "/image/{productUuid}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "{productUuid}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Mono<ResponseEntity<String>> uploadProductImages(
             ServerWebExchange exchange,
             @RequestPart("files") Flux<FilePart> fileParts,
@@ -138,7 +141,7 @@ public class ProductController implements IProductController {
                         e -> ErrorResponse.build(e, instance).asMonoResponse());
     }
 
-    @GetMapping(value = "/image/metadata/{productUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "{productUuid}/image/metadata", produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<String>> getProductImageMetadata(
             ServerWebExchange exchange,
             @PathVariable UUID productUuid) {
@@ -155,4 +158,40 @@ public class ProductController implements IProductController {
 
     }
 
+    @GetMapping("/search")
+    public Mono<ResponseEntity<String>> searchProductsByName(
+            @RequestParam("name") String searchTerm,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        var instance = router.getURI("search", searchTerm);
+        Pageable pageable = PageRequest.of(page, size);
+        return productService.findProducts(searchTerm, pageable)
+                .collectList()
+                .zipWith(productService.countByName(searchTerm))
+                .map(tuple -> new PageImpl<>(tuple.getT1(), pageable, tuple.getT2()))
+                .map(productPage -> SuccessfulResponse.WithPageableData.of(productPage, instance)
+                        .asResponse())
+                .onErrorResume(ProductError.class,
+                        e -> ErrorResponse.build(e, instance).asMonoResponse());
+
+    }
+
+    @PatchMapping(value = "/uuid/{uuid}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<ResponseEntity<String>> updateProduct(
+            ServerWebExchange exchange,
+            @PathVariable UUID uuid,
+            @RequestBody UpdateProductDto updateProductDto) {
+        var instance = router.getURI("uuid", uuid);
+        var finder = new ProductFinder.ByUuid(uuid);
+        return productService
+                .updateProduct(finder, updateProductDto)
+                .map(result -> SuccessfulResponse.WithData.builder()
+                        .item(result)
+                        .instance(instance)
+                        .build()
+                        .asResponse())
+                .onErrorResume(ProductError.class,
+                        e -> ErrorResponse.build(e, instance).asMonoResponse());
+    }
 }

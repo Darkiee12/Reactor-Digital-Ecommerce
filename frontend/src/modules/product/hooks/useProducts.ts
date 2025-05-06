@@ -14,10 +14,10 @@ const useProducts = (
     queryKey: ['products', finder.type, finder.value],
     queryFn: async () => {
       const result = await ProductService.getProducts(finder);
-      if (result.err) {
-        throw result.val.response?.data;
+      if (result.status !== 200) {
+        throw new Error('Error fetching products');
       }
-      return result.val.data;
+      return result.data;
     },
     ...options,
   });

@@ -9,6 +9,6 @@ export interface Product {
   type: null;
   createdAt: number;
   updatedAt: number;
-  imagesUuid: null;
+  imagesUuid: string[];
   categories: string[];
 }
