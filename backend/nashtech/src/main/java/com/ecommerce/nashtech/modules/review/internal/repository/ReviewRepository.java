@@ -2,6 +2,7 @@ package com.ecommerce.nashtech.modules.review.internal.repository;
 
 import java.util.UUID;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
 
@@ -16,11 +17,17 @@ public interface ReviewRepository extends R2dbcRepository<Review, Long> {
 
     Mono<Review> findByUuid(UUID uuid);
 
-    Flux<Review> findByProductId(Long productId);
+    Flux<Review> findByProductId(UUID productId, Pageable pageable);
 
-    Flux<Review> findByUserId(Long userId);
+    Mono<Long> countByProductId(UUID productId);
+
+    Flux<Review> findAllByProductId(UUID productId);
+
+    Flux<Review> findByUserId(UUID userId);
 
     Mono<Boolean> existsById(Long id);
 
     Mono<Boolean> existsByUuid(UUID uuid);
+
+    Mono<Void> deleteByUuid(UUID id);
 }

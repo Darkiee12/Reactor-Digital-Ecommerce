@@ -3,9 +3,6 @@ package com.ecommerce.nashtech.modules.brand.error;
 import com.ecommerce.nashtech.shared.error.BaseError;
 import com.ecommerce.nashtech.shared.types.Option;
 
-/**
- * Defines Brand-specific domain errors for reactive flows.
- */
 public sealed abstract class BrandError extends BaseError permits
         BrandError.BrandNotFoundError,
         BrandError.DuplicateBrandNameError {

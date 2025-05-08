@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import useUniqueCheck from '@/modules/user/hooks/useUniqueCheck';
 import { RootState } from '@/store';
 import { useSelector } from 'react-redux';
 import useUpdateUser from '../hooks/useUpdateUser';
@@ -54,12 +53,6 @@ const AccountAmendmentSegment = () => {
     email: z.string().email(),
   });
 
-  const { data: isUsernameUnique } = useUniqueCheck({
-    type: 'username',
-    value: form.watch('username'),
-  });
-  const { data: isEmailUnique } = useUniqueCheck({ type: 'email', value: form.watch('email') });
-
   useEffect(() => {
     const currentValues = form.getValues();
     const hasChanged =
@@ -95,9 +88,6 @@ const AccountAmendmentSegment = () => {
                 <FormControl>
                   <Input {...field} placeholder="shadcn" />
                 </FormControl>
-                <FormDescription className="text-sm text-red-500">
-                  {!isUsernameUnique && 'Username is already taken'}
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -111,9 +101,6 @@ const AccountAmendmentSegment = () => {
                 <FormControl>
                   <Input {...field} placeholder="shadcn@example.com" />
                 </FormControl>
-                <FormDescription className="text-sm text-red-500">
-                  {!isEmailUnique && 'Email is already taken'}
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

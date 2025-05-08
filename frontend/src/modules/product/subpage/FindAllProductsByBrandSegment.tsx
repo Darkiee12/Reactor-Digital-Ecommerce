@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import useProducts from '@/modules/product/hooks/useProducts';
 import { ProductsFinder } from '@/modules/product/model/enums';
 import DisplayMultipleProducts from '@/modules/product/components/MultipleProduct';
@@ -13,14 +12,23 @@ import {
   CommandSeparator,
 } from '@/components/ui/command';
 import Brand from '@/modules/brand/model/brand';
-import useBrands from '@/modules/brand/hooks/useBrand';
+import useBrandSearch from '@/modules/brand/hooks/useBrandSearch';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationEllipsis,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 const FindAllByBrand = () => {
   const [currentSearchTerm, setCurrentSearchTerm] = useState('');
   const [selectedBrand, setSelectedBrand] = useState<number>();
   const [page, setPage] = useState(0);
 
-  const { data: brandData, isLoading: isBrandsLoading } = useBrands(currentSearchTerm, 0, {
+  const { data: brandData, isLoading: isBrandsLoading } = useBrandSearch(currentSearchTerm, 0, {
     queryKey: ['brands', 'search', currentSearchTerm, page],
     enabled: !!currentSearchTerm,
   });
@@ -34,7 +42,37 @@ const FindAllByBrand = () => {
     setPage(0);
   };
 
-  // Pagination handlers
+  // Generate page numbers for pagination display
+  const getPageNumbers = (currentPage: number, totalPages: number) => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const pages: (number | string)[] = [];
+    pages.push(1); // Always show first page
+
+    if (currentPage >= 4) {
+      pages.push('...');
+    }
+
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    if (currentPage <= totalPages - 3) {
+      pages.push('...');
+    }
+
+    if (totalPages > 1) {
+      pages.push(totalPages); // Always show last page
+    }
+
+    return pages;
+  };
+
+  // Pagination navigation handlers
   const handleNextPage = () => {
     if (productData?.page.hasNext) {
       setPage(prev => prev + 1);
@@ -42,7 +80,7 @@ const FindAllByBrand = () => {
   };
 
   const handlePreviousPage = () => {
-    if (page > 0) {
+    if (productData?.page.hasPrevious) {
       setPage(prev => prev - 1);
     }
   };
@@ -54,12 +92,12 @@ const FindAllByBrand = () => {
           placeholder="Search a brand here"
           value={currentSearchTerm}
           onValueChange={setCurrentSearchTerm}
-          className=" bg-none"
+          className="bg-none"
         />
         <CommandList>
           {isBrandsLoading ? (
             <CommandEmpty>{currentSearchTerm.length > 3 && 'Loading brands...'}</CommandEmpty>
-          ) : brandData?.items.length ? (
+          ) : brandData?.items ? (
             <CommandGroup heading="Brands">
               {currentSearchTerm.length > 2 &&
                 brandData.items.map((brand: Brand) => (
@@ -86,28 +124,40 @@ const FindAllByBrand = () => {
       ) : (
         <>
           <DisplayMultipleProducts products={productData?.items || []} />
-          {productData && (
-            <div className="flex justify-between mt-4">
-              <Button
-                onClick={handlePreviousPage}
-                disabled={page === 0}
-                variant="outline"
-                className="dark:bg-green-600 bg-green-400"
-              >
-                Previous
-              </Button>
-              <span>
-                Page {page + 1}/{productData.page.totalPages}
-              </span>
-              <Button
-                className="dark:bg-green-600 bg-green-400"
-                onClick={handleNextPage}
-                disabled={!productData?.page.hasNext}
-                variant="outline"
-              >
-                Next
-              </Button>
-            </div>
+          {productData && productData.page.totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={handlePreviousPage}
+                    className={productData.page.hasPrevious ? 'block' : 'hidden'}
+                  />
+                </PaginationItem>
+                {getPageNumbers(page + 1, productData.page.totalPages).map((pageNum, index) =>
+                  pageNum === '...' ? (
+                    <PaginationItem key={index}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={index}>
+                      <PaginationLink
+                        href="#"
+                        isActive={pageNum === page + 1}
+                        onClick={() => setPage((pageNum as number) - 1)}
+                      >
+                        {pageNum}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                )}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={handleNextPage}
+                    className={productData.page.hasNext ? 'block' : 'hidden'}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           )}
         </>
       )}

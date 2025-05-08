@@ -2,14 +2,8 @@ package com.ecommerce.nashtech.shared.config;
 
 import java.util.List;
 
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.MethodParameter;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.core.MethodParameter;
-import lombok.Builder;
-import lombok.Data;
 import lombok.experimental.FieldDefaults;
-import org.springframework.core.MethodParameter;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;

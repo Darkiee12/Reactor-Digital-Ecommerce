@@ -18,6 +18,7 @@ import com.ecommerce.nashtech.shared.enums.UserFinder;
 import com.ecommerce.nashtech.shared.types.Option;
 
 import java.time.Instant;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -154,6 +155,12 @@ public class UserService implements IUserService {
         return find(finder).flatMap(user -> Mono.when(accountService.delete(finder),
                 userRepo.setDeletedById(user.getId()))).as(txOperator::transactional)
                 .then();
+    }
+
+    public Mono<String> getFullNameByUuid(UUID uuid) {
+        return userRepo.findByUuid(uuid)
+                .map(user -> user.getFullName())
+                .switchIfEmpty(Mono.error(UserError.UserNotFoundError.build(Option.none())));
     }
 
 }

@@ -46,12 +46,12 @@ public class ProductController implements IProductController {
     Router router = new Router("/api/v1/products");
 
     @Override
-    @GetMapping("/uuid/{uuid}")
+    @GetMapping("/{id}")
     public Mono<ResponseEntity<String>> getProductByUuid(
             ServerWebExchange exchange,
-            @PathVariable UUID uuid) {
-        var instance = router.getURI("uuid", uuid);
-        var finder = new ProductFinder.ByUuid(uuid);
+            @PathVariable("id") UUID id) {
+        var instance = router.getURI(id);
+        var finder = new ProductFinder.ByUuid(id);
         return productService
                 .getFullProduct(finder)
                 .map(result -> SuccessfulResponse.WithData.builder()
@@ -64,25 +64,7 @@ public class ProductController implements IProductController {
     }
 
     @Override
-    @GetMapping("/id/{id}")
-    public Mono<ResponseEntity<String>> getProductById(
-            ServerWebExchange exchange,
-            @PathVariable Long id) {
-        var instance = router.getURI("id", id);
-        var finder = new ProductFinder.ById(id);
-        return productService
-                .getFullProduct(finder)
-                .map(result -> SuccessfulResponse.WithData.builder()
-                        .item(result)
-                        .instance(instance)
-                        .build()
-                        .asResponse())
-                .onErrorResume(ProductError.class,
-                        e -> ErrorResponse.build(e, instance).asMonoResponse());
-    }
-
-    @Override
-    @GetMapping("/brand/{brandId}")
+    @GetMapping("/byBrand/{brandId}")
     public Mono<ResponseEntity<String>> getProductsByBrandId(
             ServerWebExchange exchange,
             @PathVariable Long brandId,
@@ -103,7 +85,7 @@ public class ProductController implements IProductController {
     }
 
     @Override
-    @GetMapping("/category/{categoryId}")
+    @GetMapping("/byCategory/{categoryId}")
     public Mono<ResponseEntity<String>> getProductsByCategoryId(
             ServerWebExchange exchange,
             @PathVariable Long categoryId,
@@ -122,7 +104,7 @@ public class ProductController implements IProductController {
                         e -> ErrorResponse.build(e, instance).asMonoResponse());
     }
 
-    @PostMapping(value = "{productUuid}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Mono<ResponseEntity<String>> uploadProductImages(
             ServerWebExchange exchange,
             @RequestPart("files") Flux<FilePart> fileParts,
@@ -141,12 +123,12 @@ public class ProductController implements IProductController {
                         e -> ErrorResponse.build(e, instance).asMonoResponse());
     }
 
-    @GetMapping(value = "{productUuid}/image/metadata", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "{id}/image/metadata", produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<String>> getProductImageMetadata(
             ServerWebExchange exchange,
-            @PathVariable UUID productUuid) {
-        var instance = router.getURI("image", "metadata", productUuid);
-        return productService.getMetadataOfAllImages(productUuid)
+            @PathVariable UUID id) {
+        var instance = router.getURI(id, "image", "metadata");
+        return productService.getMetadataOfAllImages(id)
                 .collectList()
                 .map(images -> SuccessfulResponse.WithData.<List<Image>>builder()
                         .item(images)
@@ -177,12 +159,12 @@ public class ProductController implements IProductController {
 
     }
 
-    @PatchMapping(value = "/uuid/{uuid}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<String>> updateProduct(
             ServerWebExchange exchange,
             @PathVariable UUID uuid,
             @RequestBody UpdateProductDto updateProductDto) {
-        var instance = router.getURI("uuid", uuid);
+        var instance = router.getURI(uuid);
         var finder = new ProductFinder.ByUuid(uuid);
         return productService
                 .updateProduct(finder, updateProductDto)

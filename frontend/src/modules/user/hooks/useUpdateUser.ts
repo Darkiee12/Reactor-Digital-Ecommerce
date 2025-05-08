@@ -1,21 +1,17 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import UserService from '../service/UserApi';
 import { Finder } from '../model/enums';
 import UpdateUser from '../model/UpdateUser';
 import store from '@/store';
 import { setUser } from '../state/UserSlice';
+import { User } from '@/modules/user/model/User';
 
 const useUpdateUser = () =>
   useMutation({
-    mutationFn: async (params: { finder: Finder; user: UpdateUser }) => {
-      const result = await UserService.updateUser(params.finder, params.user);
-      if (result.ok) {
-        const user = result.val.data.item;
-        store.dispatch(setUser(user));
-        return result;
-      } else {
-        throw result.err;
-      }
+    mutationFn: async (params: { finder: Finder; user: UpdateUser }) =>
+      await UserService.updateUser(params.finder, params.user),
+    onSuccess: (user: User) => {
+      store.dispatch(setUser(user));
     },
   });
 

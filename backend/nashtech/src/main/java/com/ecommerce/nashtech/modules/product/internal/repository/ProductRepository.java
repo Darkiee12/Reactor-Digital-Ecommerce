@@ -1,15 +1,13 @@
 package com.ecommerce.nashtech.modules.product.internal.repository;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
-import org.springframework.data.repository.query.Param;
+
 import org.springframework.stereotype.Repository;
 
-import com.ecommerce.nashtech.modules.product.dto.ProductBrandCountDto;
 import com.ecommerce.nashtech.modules.product.internal.projection.ProductIdProjection;
 import com.ecommerce.nashtech.modules.product.model.Product;
 

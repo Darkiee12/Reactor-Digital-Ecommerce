@@ -8,12 +8,10 @@ import { AxiosError } from 'axios';
 const useRefreshToken = () =>
   useMutation({
     mutationFn: async () => {
-      const res = await UserService.refreshAccessToken();
-      const accessToken = res.data.item;
+      const accessToken = await UserService.refreshAccessToken();
       store.dispatch(setAccessToken(accessToken));
 
-      const response = await UserService.getCurrentUser();
-      const user = response.data.item;
+      const user = await UserService.getCurrentUser();
       store.dispatch(setUser(user));
 
       return accessToken;

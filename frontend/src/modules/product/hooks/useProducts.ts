@@ -9,11 +9,15 @@ import ProductService from '../service/ProductApi';
 const useProducts = (
   finder: ProductsFinder,
   page: number = 0,
-  options?: UseQueryOptions<PageResponse<Product>, AxiosError<ErrorResponse>>
+  size: number = 20,
+  options?: UseQueryOptions<{
+    items: Product[];
+    page: PageResponse<Product>['page'];
+  }>
 ) => {
-  return useQuery<PageResponse<Product>, AxiosError<ErrorResponse>>({
-    queryKey: ['products', finder.type, finder.value, page],
-    queryFn: () => ProductService.getProducts(finder).then(result => result.data),
+  return useQuery({
+    queryKey: ['products', finder.type, finder.value, page, size],
+    queryFn: () => ProductService.getProducts(finder, page, size),
     enabled: !!finder.value,
     ...options,
   });

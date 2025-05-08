@@ -38,14 +38,16 @@ import reactor.core.publisher.Mono;
 public class UserController implements IUserController {
     UserService userService;
     JwtUtils.Token.AccessTokenProvider accessTokenProvider;
-    Router router = new Router("/api/v1/user");
+    Router router = new Router("/api/v1/users");
 
     @Override
-    @GetMapping("/uuid/{uuid}")
+    @GetMapping("/{uuid}")
     public Mono<ResponseEntity<String>> getUserByUuid(
             ServerWebExchange exchange,
             @PathVariable UUID uuid) {
-        var instance = router.getURI("uuid", uuid);
+        String instance = router.getURI("uuid", uuid);
+        log.info("Fetching user by UUID: {}", uuid);
+
         var finder = new UserFinder.ByUuid(uuid);
         return userService
                 .findFullUser(finder)
@@ -53,17 +55,24 @@ public class UserController implements IUserController {
                         .item(result)
                         .instance(instance)
                         .build()
-                        .asResponse())
+                        .asMonoResponse())
+                .flatMap(response -> response)
                 .onErrorResume(UserError.class,
-                        e -> ErrorResponse.build(e, instance).asMonoResponse());
+                        e -> {
+                            log.error("Error fetching user by UUID {}: {}", uuid,
+                                    e.getMessage());
+                            return ErrorResponse.build(e, instance).asMonoResponse();
+                        });
     }
 
     @Override
-    @GetMapping("/username/{username}")
+    @GetMapping("/byUsername/{username}")
     public Mono<ResponseEntity<String>> getUserByUsername(
             ServerWebExchange exchange,
             @PathVariable String username) {
-        var instance = router.getURI("username", username);
+        String instance = router.getURI("username", username);
+        log.info("Fetching user by username: {}", username);
+
         var finder = new UserFinder.ByUsername(username);
         return userService
                 .findFullUser(finder)
@@ -71,22 +80,30 @@ public class UserController implements IUserController {
                         .item(result)
                         .instance(instance)
                         .build()
-                        .asResponse())
+                        .asMonoResponse())
+                .flatMap(response -> response)
                 .onErrorResume(UserError.class,
-                        e -> ErrorResponse.build(e, instance).asMonoResponse());
+                        e -> {
+                            log.error("Error fetching user by username {}: {}", username,
+                                    e.getMessage());
+                            return ErrorResponse.build(e, instance).asMonoResponse();
+                        });
     }
 
-    @GetMapping(value = "/me")
-    public Mono<ResponseEntity<String>> getCurrentUser(
-            ServerWebExchange exchange) {
-        var instance = router.getURI("me");
+    @Override
+    @GetMapping("/me")
+    public Mono<ResponseEntity<String>> getCurrentUser(ServerWebExchange exchange) {
+        String instance = router.getURI("me");
+        log.info("Fetching current user information");
 
         var token = exchange.getRequest().getHeaders().getFirst("Authorization");
         if (token == null || !token.startsWith("Bearer ")) {
+            log.warn("Unauthorized access attempt to /me endpoint");
             return ErrorResponse
                     .build(AccountError.UnauthorizedError.build(), instance)
                     .asMonoResponse();
         }
+
         var jwt = token.substring(7);
         return accessTokenProvider.getUsernameFromToken(jwt)
                 .map(username -> new UserFinder.ByUsername(username))
@@ -95,18 +112,23 @@ public class UserController implements IUserController {
                         .item(result)
                         .instance(instance)
                         .build()
-                        .asResponse())
+                        .asMonoResponse())
+                .flatMap(response -> response)
                 .onErrorResume(UserError.class,
-                        e -> ErrorResponse.build(e, instance).asMonoResponse());
-
+                        e -> {
+                            log.error("Error fetching current user: {}", e.getMessage());
+                            return ErrorResponse.build(e, instance).asMonoResponse();
+                        });
     }
 
     @Override
-    @GetMapping("/email/{email}")
+    @GetMapping("/byEmail/{email}")
     public Mono<ResponseEntity<String>> getUserByEmail(
             ServerWebExchange exchange,
             @PathVariable String email) {
-        var instance = router.getURI("email", email);
+        String instance = router.getURI("email", email);
+        log.info("Fetching user by email: {}", email);
+
         var finder = new UserFinder.ByEmail(email);
         return userService
                 .findFullUser(finder)
@@ -114,35 +136,49 @@ public class UserController implements IUserController {
                         .item(result)
                         .instance(instance)
                         .build()
-                        .asResponse())
+                        .asMonoResponse())
+                .flatMap(response -> response)
                 .onErrorResume(UserError.class,
-                        e -> ErrorResponse.build(e, instance).asMonoResponse());
+                        e -> {
+                            log.error("Error fetching user by email {}: {}", email,
+                                    e.getMessage());
+                            return ErrorResponse.build(e, instance).asMonoResponse();
+                        });
     }
 
     @Override
-    @PostMapping()
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<String>> createUser(
             ServerWebExchange exchange,
             @RequestBody CreateUserDto dto) {
-        var instance = router.getURI("create");
+        String instance = router.getURI("create");
+        log.info("Creating new user with username: {}", dto.username());
+
         return userService
                 .create(dto)
                 .map(result -> SuccessfulResponse.WithData.builder()
                         .item(result)
                         .instance(instance)
                         .build()
-                        .asResponse())
+                        .asMonoResponse())
+                .flatMap(response -> response)
                 .onErrorResume(UserError.class,
-                        e -> ErrorResponse.build(e, instance).asMonoResponse());
+                        e -> {
+                            log.error("Error creating user {}: {}", dto.username(),
+                                    e.getMessage());
+                            return ErrorResponse.build(e, instance).asMonoResponse();
+                        });
     }
 
     @Override
-    @PatchMapping("/uuid/{uuid}")
+    @PatchMapping("/{uuid}")
     public Mono<ResponseEntity<String>> updateUserByUuid(
             ServerWebExchange exchange,
             @PathVariable UUID uuid,
             @RequestBody UpdateUserDto dto) {
-        var instance = router.getURI("id", uuid);
+        String instance = router.getURI("uuid", uuid);
+        log.info("Updating user with UUID: {}", uuid);
+
         var finder = new UserFinder.ByUuid(uuid);
         return userService
                 .update(finder, dto)
@@ -150,18 +186,24 @@ public class UserController implements IUserController {
                         .item(result)
                         .instance(instance)
                         .build()
-                        .asResponse())
+                        .asMonoResponse())
+                .flatMap(response -> response)
                 .onErrorResume(UserError.class,
-                        e -> ErrorResponse.build(e, instance).asMonoResponse());
+                        e -> {
+                            log.error("Error updating user {}: {}", uuid, e.getMessage());
+                            return ErrorResponse.build(e, instance).asMonoResponse();
+                        });
     }
 
     @Override
-    @PatchMapping(value = "/username/{username}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PatchMapping(value = "/byUsername/{username}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<String>> updateUserByUsername(
             ServerWebExchange exchange,
             @PathVariable String username,
             @RequestBody UpdateUserDto dto) {
-        var instance = router.getURI("username", username);
+        String instance = router.getURI("username", username);
+        log.info("Updating user with username: {}", username);
+
         var finder = new UserFinder.ByUsername(username);
         return userService
                 .update(finder, dto)
@@ -169,18 +211,25 @@ public class UserController implements IUserController {
                         .item(result)
                         .instance(instance)
                         .build()
-                        .asResponse())
+                        .asMonoResponse())
+                .flatMap(response -> response)
                 .onErrorResume(UserError.class,
-                        e -> ErrorResponse.build(e, instance).asMonoResponse());
+                        e -> {
+                            log.error("Error updating user {}: {}", username,
+                                    e.getMessage());
+                            return ErrorResponse.build(e, instance).asMonoResponse();
+                        });
     }
 
     @Override
-    @PatchMapping(value = "/email/{email}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PatchMapping(value = "/byEmail/{email}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<String>> updateUserByEmail(
             ServerWebExchange exchange,
             @PathVariable String email,
             @RequestBody UpdateUserDto dto) {
-        var instance = router.getURI("email", email);
+        String instance = router.getURI("email", email);
+        log.info("Updating user with email: {}", email);
+
         var finder = new UserFinder.ByEmail(email);
         return userService
                 .update(finder, dto)
@@ -188,17 +237,23 @@ public class UserController implements IUserController {
                         .item(result)
                         .instance(instance)
                         .build()
-                        .asResponse())
+                        .asMonoResponse())
+                .flatMap(response -> response)
                 .onErrorResume(UserError.class,
-                        e -> ErrorResponse.build(e, instance).asMonoResponse());
+                        e -> {
+                            log.error("Error updating user {}: {}", email, e.getMessage());
+                            return ErrorResponse.build(e, instance).asMonoResponse();
+                        });
     }
 
     @Override
-    @DeleteMapping(value = "/uuid/{uuid}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping("/{uuid}")
     public Mono<ResponseEntity<String>> deleteUserByUuid(
             ServerWebExchange exchange,
             @PathVariable UUID uuid) {
-        var instance = router.getURI("uuid", uuid);
+        String instance = router.getURI("uuid", uuid);
+        log.info("Deleting user with UUID: {}", uuid);
+
         var finder = new UserFinder.ByUuid(uuid);
         return userService
                 .delete(finder)
@@ -206,17 +261,23 @@ public class UserController implements IUserController {
                         .message("User deleted successfully")
                         .instance(instance)
                         .build()
-                        .asResponse())
+                        .asMonoResponse())
+                .flatMap(response -> response)
                 .onErrorResume(UserError.class,
-                        e -> ErrorResponse.build(e, instance).asMonoResponse());
+                        e -> {
+                            log.error("Error deleting user {}: {}", uuid, e.getMessage());
+                            return ErrorResponse.build(e, instance).asMonoResponse();
+                        });
     }
 
     @Override
-    @DeleteMapping("/username/{username}")
+    @DeleteMapping("/byUsername/{username}")
     public Mono<ResponseEntity<String>> deleteUserByUsername(
             ServerWebExchange exchange,
             @PathVariable String username) {
-        var instance = router.getURI("username", username);
+        String instance = router.getURI("username", username);
+        log.info("Deleting user with username: {}", username);
+
         var finder = new UserFinder.ByUsername(username);
         return userService
                 .delete(finder)
@@ -224,17 +285,24 @@ public class UserController implements IUserController {
                         .message("User deleted successfully")
                         .instance(instance)
                         .build()
-                        .asResponse())
+                        .asMonoResponse())
+                .flatMap(response -> response)
                 .onErrorResume(UserError.class,
-                        e -> ErrorResponse.build(e, instance).asMonoResponse());
+                        e -> {
+                            log.error("Error deleting user {}: {}", username,
+                                    e.getMessage());
+                            return ErrorResponse.build(e, instance).asMonoResponse();
+                        });
     }
 
     @Override
-    @DeleteMapping("/email/{email}")
+    @DeleteMapping("/byEmail/{email}")
     public Mono<ResponseEntity<String>> deleteUserByEmail(
             ServerWebExchange exchange,
             @PathVariable String email) {
-        var instance = router.getURI("email", email);
+        String instance = router.getURI("email", email);
+        log.info("Deleting user with email: {}", email);
+
         var finder = new UserFinder.ByEmail(email);
         return userService
                 .delete(finder)
@@ -242,8 +310,12 @@ public class UserController implements IUserController {
                         .message("User deleted successfully")
                         .instance(instance)
                         .build()
-                        .asResponse())
+                        .asMonoResponse())
+                .flatMap(response -> response)
                 .onErrorResume(UserError.class,
-                        error -> ErrorResponse.build(error, instance).asMonoResponse());
+                        e -> {
+                            log.error("Error deleting user {}: {}", email, e.getMessage());
+                            return ErrorResponse.build(e, instance).asMonoResponse();
+                        });
     }
 }

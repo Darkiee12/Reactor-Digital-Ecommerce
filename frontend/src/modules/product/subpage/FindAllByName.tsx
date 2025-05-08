@@ -9,7 +9,17 @@ import useProducts from '@/modules/product/hooks/useProducts';
 import { ProductsFinder } from '@/modules/product/model/enums';
 import DisplayMultipleProducts from '@/modules/product/components/MultipleProduct';
 import { useState } from 'react';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationEllipsis,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
+// Define the form schema using Zod
 const formSchema = z.object({
   searchTerm: z.string().min(3, {
     message: 'Searching keywords must be at least 3 characters long',
@@ -21,8 +31,9 @@ type FormValues = z.infer<typeof formSchema>;
 const FindAllByName = () => {
   const [currentSearchTerm, setCurrentSearchTerm] = useState('');
   const [page, setPage] = useState(0);
+  const [size] = useState(20); // Default page size
   const finder: ProductsFinder = { type: 'name', value: currentSearchTerm };
-  const { data, isLoading, error } = useProducts(finder, page, {
+  const { data, isLoading, error } = useProducts(finder, page, size, {
     queryKey: ['products', 'search', currentSearchTerm, page],
     enabled: !!currentSearchTerm,
   });
@@ -32,12 +43,50 @@ const FindAllByName = () => {
     defaultValues: { searchTerm: '' },
   });
 
+  // Handle form submission
   const onSubmit = (values: FormValues) => {
     setCurrentSearchTerm(values.searchTerm);
-    setPage(0); // Reset page to 0 on new search
+    setPage(0); // Reset to first page on new search
   };
 
-  // Pagination handlers
+  // Generate page numbers for pagination display
+  const getPageNumbers = (currentPage: number, totalPages: number) => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const pages: (number | string)[] = [];
+
+    // Always show first page
+    pages.push(1);
+
+    // Show ellipsis if currentPage is 4 or higher
+    if (currentPage >= 4) {
+      pages.push('...');
+    }
+
+    // Show pages around currentPage
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    // Show ellipsis if currentPage is 3 or more pages from the end
+    if (currentPage <= totalPages - 3) {
+      pages.push('...');
+    }
+
+    // Always show last page if more than one page exists
+    if (totalPages > 1) {
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
+
+  // Pagination navigation handlers
   const handleNextPage = () => {
     if (data?.page.hasNext) {
       setPage(prev => prev + 1);
@@ -45,7 +94,7 @@ const FindAllByName = () => {
   };
 
   const handlePreviousPage = () => {
-    if (page > 0) {
+    if (data?.page.hasPrevious) {
       setPage(prev => prev - 1);
     }
   };
@@ -79,6 +128,7 @@ const FindAllByName = () => {
           </Button>
         </form>
       </Form>
+
       {isLoading ? (
         <div>Loading...</div>
       ) : error ? (
@@ -86,28 +136,34 @@ const FindAllByName = () => {
       ) : (
         <>
           <DisplayMultipleProducts products={data?.items || []} />
-          {data && (
-            <div className="flex justify-between mt-4">
-              <Button
-                onClick={handlePreviousPage}
-                disabled={page === 0}
-                variant="outline"
-                className="dark:bg-green-600 bg-green-400"
-              >
-                Previous
-              </Button>
-              <span>
-                Page {page + 1}/{data.page.totalItems}
-              </span>
-              <Button
-                onClick={handleNextPage}
-                disabled={!data?.page.hasNext}
-                variant="outline"
-                className="dark:bg-green-600 bg-green-400"
-              >
-                Next
-              </Button>
-            </div>
+          {data && data.page.totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious onClick={handlePreviousPage} />
+                </PaginationItem>
+                {getPageNumbers(page + 1, data.page.totalPages).map((pageNum, index) =>
+                  pageNum === '...' ? (
+                    <PaginationItem key={index}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={index}>
+                      <PaginationLink
+                        href="#"
+                        isActive={pageNum === page + 1}
+                        onClick={() => setPage((pageNum as number) - 1)}
+                      >
+                        {pageNum}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                )}
+                <PaginationItem>
+                  <PaginationNext onClick={handleNextPage} />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           )}
         </>
       )}

@@ -14,7 +14,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.http.HttpCookie;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -61,6 +60,7 @@ public class AccountController implements IAccountController {
             @Valid @RequestBody Mono<SignInDto> dtoMono) {
 
         String instance = router.getURI("login");
+        log.info("Login attempt from IP: {}", extractClientIp(exchange));
 
         return dtoMono
                 .flatMap(dto -> authenticate(dto))
@@ -73,6 +73,7 @@ public class AccountController implements IAccountController {
     @GetMapping("/refresh")
     public Mono<ResponseEntity<String>> renewAccessToken(ServerWebExchange exchange) {
         String instance = router.getURI("refresh");
+        log.info("Token refresh attempt from IP: {}", extractClientIp(exchange));
 
         MultiValueMap<String, HttpCookie> cookies = exchange.getRequest().getCookies();
         Option<HttpCookie> refreshTokenCookie = Option.fromNullable(cookies.getFirst("refreshToken"));
@@ -86,12 +87,15 @@ public class AccountController implements IAccountController {
                         .flatMap(finder -> accountService.findFullAccount(finder))
                         .map(fullAccount -> accessTokenProvider.generateToken(fullAccount))
                         .map(accessJwt -> Map.of("accessToken", accessJwt))
-                        .map(accessToken -> SuccessfulResponse.WithData.builder().item(accessToken).build()
-                                .asResponse())
+                        .map(accessToken -> SuccessfulResponse.WithData.builder()
+                                .item(accessToken)
+                                .instance(instance)
+                                .build()
+                                .asMonoResponse())
+                        .flatMap(response -> response)
                         .onErrorResume(AccountError.InvalidTokenError.class,
                                 e -> unauthorizedResponse(instance))
                         .onErrorResume(AccountError.class, e -> ErrorResponse.build(e, instance).asMonoResponse());
-
             }
             case Option.None<HttpCookie> none -> {
                 yield unauthorizedResponse(instance);
@@ -103,51 +107,23 @@ public class AccountController implements IAccountController {
     @PostMapping("/logout")
     public Mono<ResponseEntity<String>> logout(ServerWebExchange exchange) {
         String instance = router.getURI("logout");
+        log.info("Logout request from IP: {}", extractClientIp(exchange));
 
         ResponseCookie expiredCookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .secure(profileEnvironment.isProduction())
                 .path("/")
                 .sameSite("Lax")
-                .maxAge(Duration.ZERO) // Delete the cookie
+                .maxAge(Duration.ZERO)
                 .build();
 
         exchange.getResponse().addCookie(expiredCookie);
 
-        return SuccessfulResponse.WithMessage.builder().message("Logout successful")
+        return SuccessfulResponse.WithMessage.builder()
+                .message("Logout successful")
                 .instance(instance)
                 .build()
                 .asMonoResponse();
-    }
-
-    @Override
-    @GetMapping("/exists/username/{username}")
-    public Mono<ResponseEntity<String>> usernameExists(ServerWebExchange exchange, @PathVariable String username) {
-        String instance = router.getURI("exists", "username", username);
-        var finder = new UserFinder.ByUsername(username);
-        return accountService
-                .exists(finder)
-                .map(exists -> SuccessfulResponse.WithMessage.builder()
-                        .message(exists ? "Username exists" : "Username does not exist")
-                        .instance(instance)
-                        .build()
-                        .asResponse())
-                .onErrorResume(AccountError.class, e -> ErrorResponse.build(e, instance).asMonoResponse());
-    }
-
-    @Override
-    @GetMapping("/exists/email/{email}")
-    public Mono<ResponseEntity<String>> emailExists(ServerWebExchange exchange, @PathVariable String email) {
-        String instance = router.getURI("exists", "email", email);
-        var finder = new UserFinder.ByEmail(email);
-        return accountService
-                .exists(finder)
-                .map(exists -> SuccessfulResponse.WithMessage.builder()
-                        .message(exists ? "Email exists" : "email does not exist")
-                        .instance(instance)
-                        .build()
-                        .asResponse())
-                .onErrorResume(AccountError.class, e -> ErrorResponse.build(e, instance).asMonoResponse());
     }
 
     // ==== Private helper methods ====

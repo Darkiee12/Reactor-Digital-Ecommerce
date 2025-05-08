@@ -3,7 +3,7 @@ package com.ecommerce.nashtech.modules.brand.controller;
 import com.ecommerce.nashtech.modules.brand.dto.UpdateBrandDto;
 import com.ecommerce.nashtech.modules.brand.error.BrandError;
 import com.ecommerce.nashtech.modules.brand.dto.CreateBrandDto;
-import com.ecommerce.nashtech.modules.brand.service.IBrandService;
+import com.ecommerce.nashtech.modules.brand.service.BrandService;
 import com.ecommerce.nashtech.modules.product.error.ProductError;
 import com.ecommerce.nashtech.shared.response.ErrorResponse;
 import com.ecommerce.nashtech.shared.response.SuccessfulResponse;
@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.AccessLevel;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
@@ -32,15 +31,16 @@ import reactor.core.publisher.Mono;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class BrandController implements IBrandController {
 
-    IBrandService brandService;
+    BrandService brandService;
     Router router = new Router("/api/brands");
 
     @Override
     @GetMapping
-    public Mono<ResponseEntity<String>> getAll(@RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+    public Mono<ResponseEntity<String>> getAll(
+            @RequestParam int page,
+            @RequestParam int size) {
         var instance = router.getURI("");
-        Pageable pageable = PageRequest.of(page, size);
+        var pageable = PageRequest.of(page, size);
         return brandService.findAll(pageable)
                 .collectList()
                 .zipWith(brandService.count())
@@ -96,7 +96,7 @@ public class BrandController implements IBrandController {
     }
 
     @Override
-    @PostMapping(value = "{brandId}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Mono<ResponseEntity<String>> uploadBrandImage(
             ServerWebExchange exchange,
             @RequestPart("file") Mono<FilePart> filePart,

@@ -33,8 +33,8 @@ public class ImageController implements IImageController {
     Router router = new Router("/api/v1/images");
 
     @Override
-    @GetMapping(value = "/uuid/{uuid}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public Flux<DataBuffer> getImage(@PathVariable("uuid") UUID uuid, ServerWebExchange exchange) {
+    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public Flux<DataBuffer> getImage(@PathVariable("id") UUID uuid, ServerWebExchange exchange) {
         return imageService.getImage(uuid.toString());
     }
 
@@ -45,11 +45,11 @@ public class ImageController implements IImageController {
     }
 
     @Override
-    @GetMapping(value = "/uuid/{uuid}/metadata", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<ResponseEntity<String>> getMetadata(@PathVariable("uuid") UUID uuid) {
+    @GetMapping(value = "/{id}/metadata", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<ResponseEntity<String>> getMetadata(@PathVariable("id") UUID uuid) {
         var instance = router.getURI(uuid, "metadata");
         return imageService.getImageMetadata(uuid)
-                .map(metatadata -> SuccessfulResponse.WithData.builder().item(metatadata).instance(instance).build()
+                .map(metadata -> SuccessfulResponse.WithData.builder().item(metadata).instance(instance).build()
                         .asResponse())
                 .onErrorResume(ImageError.class, e -> ErrorResponse.build(e, instance).asMonoResponse());
     }

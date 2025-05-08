@@ -49,11 +49,9 @@ public class BrandService implements IBrandService {
     @Override
     public Mono<BrandDto> findDtoById(Long id) {
         var productCount = productService.countByBrand(id);
-        // var productDistinctCount = productService.countDistinctByBrand(id);
+
         var brandMono = findById(id);
-        return Mono.zip(brandMono, productCount
-        // , productDistinctCount
-        )
+        return Mono.zip(brandMono, productCount)
                 .map(tuple -> {
                     var brand = tuple.getT1();
                     var count = tuple.getT2();

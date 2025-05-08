@@ -1,3 +1,43 @@
+# FROM maven:3.9.9-eclipse-temurin-21
+
+# RUN apt-get update && apt-get install -y \
+#     curl \
+#     git \
+#     zsh \
+#     fzf \
+#     bash \
+#     unzip \
+#     wget \
+#     zip \
+#     && rm -rf /var/lib/apt/lists/*
+
+# SHELL ["/bin/zsh", "-c"]
+
+# RUN mkdir -p /root/.local/share/zsh/plugins && \
+#     git clone https://github.com/zsh-users/zsh-autosuggestions /root/.local/share/zsh/plugins/zsh-autosuggestions && \
+#     git clone https://github.com/zsh-users/zsh-syntax-highlighting /root/.local/share/zsh/plugins/zsh-syntax-highlighting && \
+#     git clone --depth=1 https://github.com/romkatv/powerlevel10k.git /root/.local/share/zsh/plugins/powerlevel10k
+
+# COPY .p10k.zsh /root/.config/zsh/.p10k.zsh
+
+# RUN echo 'export ZSH_THEME="powerlevel10k/powerlevel10k"' > /root/.zshrc && \
+#     echo 'source /root/.config/zsh/.p10k.zsh' >> /root/.zshrc && \
+#     echo 'source /root/.local/share/zsh/plugins/powerlevel10k/powerlevel10k.zsh-theme' >> /root/.zshrc && \
+#     echo 'autoload -Uz compinit && compinit' >> /root/.zshrc && \
+#     echo 'source /root/.local/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh' >> /root/.zshrc && \
+#     echo 'source /root/.local/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh' >> /root/.zshrc && \
+#     echo '[ -f /usr/share/doc/fzf/examples/key-bindings.zsh ] && source /usr/share/doc/fzf/examples/key-bindings.zsh' >> /root/.zshrc && \
+#     echo '[ -f /usr/share/doc/fzf/examples/completion.zsh ] && source /usr/share/doc/fzf/examples/completion.zsh' >> /root/.zshrc && \
+#     wget https://github.com/google/google-java-format/releases/download/v1.17.0/google-java-format-1.17.0-all-deps.jar -O /usr/local/bin/google-java-format.jar && \
+#     echo 'alias google-java-format="java -jar /usr/local/bin/google-java-format.jar"' >> /root/.zshrc
+
+# RUN chsh root -s /bin/zsh
+
+# ENV MAVEN_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+
+# ENTRYPOINT ["/usr/local/bin/mvn-entrypoint.sh"]
+# CMD ["mvn spring-boot:run -Dspring-boot.run.profiles=dev"]
+
 FROM maven:3.9.9-eclipse-temurin-21-alpine
 
 RUN apk add --no-cache curl git zsh zsh-theme-powerlevel10k fzf bash unzip shadow wget zip

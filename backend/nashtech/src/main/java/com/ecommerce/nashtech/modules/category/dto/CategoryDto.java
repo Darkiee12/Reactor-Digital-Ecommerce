@@ -6,10 +6,12 @@ import lombok.Builder;
 
 @Builder
 public record CategoryDto(
+        Long id,
         String name,
         Long count) {
     public static CategoryDto from(Category category, Long totalProductCount) {
         return new CategoryDto(
+                category.getId(),
                 category.getName(),
                 totalProductCount);
     }

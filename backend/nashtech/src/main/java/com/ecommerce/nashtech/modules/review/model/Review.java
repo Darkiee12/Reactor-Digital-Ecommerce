@@ -1,5 +1,7 @@
 package com.ecommerce.nashtech.modules.review.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -7,12 +9,13 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
+@Builder
 @Table("reviews")
 public class Review {
 
@@ -21,13 +24,13 @@ public class Review {
     Long id;
 
     @Column("uuid")
-    UUID uuid = UUID.randomUUID();
+    UUID uuid;
 
-    @Column("product_id")
-    Long productId;
+    @Column("product_uuid")
+    UUID productId;
 
-    @Column("user_id")
-    Long userId;
+    @Column("account_uuid")
+    UUID userId;
 
     @Column("rating")
     Integer rating;
@@ -36,5 +39,5 @@ public class Review {
     String comment;
 
     @Column("created_at")
-    LocalDateTime createdAt = LocalDateTime.now();
+    Long createdAt;
 }

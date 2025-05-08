@@ -1,3 +1,38 @@
+# FROM debian:bookworm-slim
+
+# RUN apt-get update && apt-get install -y \
+#     curl \
+#     git \
+#     zsh \
+#     fzf \
+#     unzip \
+#     sudo \
+#     && rm -rf /var/lib/apt/lists/*
+
+# SHELL ["/bin/zsh", "-c"]
+
+# RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended && \
+#     git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
+#     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && \
+#     git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+
+# COPY .p10k.zsh /root/.config/zsh/.p10k.zsh
+
+# RUN echo 'export ZSH_THEME="powerlevel10k/powerlevel10k"' > /root/.zshrc && \
+#     echo 'source /root/.config/zsh/.p10k.zsh' >> /root/.zshrc && \
+#     echo 'plugins=(git zsh-autosuggestions zsh-syntax-highlighting)' >> /root/.zshrc && \
+#     echo 'source $ZSH/oh-my-zsh.sh' >> /root/.zshrc && \
+#     echo '[ -f /usr/share/doc/fzf/examples/key-bindings.zsh ] && source /usr/share/doc/fzf/examples/key-bindings.zsh' >> /root/.zshrc && \
+#     echo '[ -f /usr/share/doc/fzf/examples/completion.zsh ] && source /usr/share/doc/fzf/examples/completion.zsh' >> /root/.zshrc
+
+# RUN curl -fsSL https://bun.sh/install | bash && \
+#     echo 'export BUN_INSTALL="$HOME/.bun"' >> /root/.zshrc && \
+#     echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> /root/.zshrc
+
+# WORKDIR /workspace/frontend
+
+# CMD ["zsh"]
+
 FROM alpine:latest
 
 RUN apk add --no-cache curl git zsh zsh-theme-powerlevel10k fzf bash unzip shadow

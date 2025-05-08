@@ -1,22 +1,24 @@
-import api from '@/shared/response/api/axios';
+import API from '@/shared/response/api/axios';
 import PageResponse from '@/shared/response/model/PageResponse';
-import Brand from '../model/brand';
+import Brand from '@/modules/brand/model/brand';
 
-const getAllBrands = async () => {
-  return await api.get<PageResponse<Brand>>('/brands');
+const api = API.getClient();
+
+const getAllBrands = async (page: number = 0, size: number = 20) => {
+  return await api.getPageData<Brand>(`/brands?page=${page}&size=${size}`);
 };
 
 const getBrandById = async (id: string) => {
-  return await api.get<Brand>(`/brands/${id}`);
+  return await api.getData<Brand>(`/brands/${id}`);
 };
 
 const createBrand = async (brand: Brand) => {
-  return await api.post<Brand>('/brands', brand);
+  return await api.postData<Brand>('/brands', brand);
 };
 
 const search = async (searchTerm: string, page: number = 0) => {
-  return await api.get<PageResponse<Brand>>(
-    `/brands/search?searchTerm=${searchTerm}&${page}=0&size=10`
+  return await api.getPageData<Brand>(
+    `/brands/search?searchTerm=${searchTerm}&page=${page}&size=10`
   );
 };
 

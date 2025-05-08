@@ -14,7 +14,6 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 public class NashtechApplication {
 
 	public static void main(String[] args) {
-
 		SpringApplication.run(NashtechApplication.class, args);
 	}
 

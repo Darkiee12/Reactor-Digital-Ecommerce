@@ -19,7 +19,7 @@ const Tabs = ({ tabs, defaultTabId }: HorizontalTabsProps) => {
   return (
     <main className="w-full">
       <div className="w-full flex gap-6 px-8 border-b border-[#3D444D] mb-2 dark:bg-black bg-white">
-        {tabs.map(({ id, icon, label }) => {
+        {tabs.map(({ id, icon: Icon, label }) => {
           const isActive = activeTab === id;
           return (
             <div
@@ -29,16 +29,16 @@ const Tabs = ({ tabs, defaultTabId }: HorizontalTabsProps) => {
               }`}
               onClick={() => setActiveTab(id)}
             >
-              <div className="rounded-xl flex gap-x-1 py-2 px-2 hover:dark:bg-gray-800 hover:bg-gray-100 hover:dark:text-white">
-                {icon} {label}
+              <div className="rounded-xl flex items-center gap-x-1 py-2 px-2 hover:dark:bg-gray-800 hover:bg-gray-100 hover:dark:text-white">
+                {Icon}
+                <span>{label}</span> {/* Wrap label in a span for better control */}
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Tab Content */}
-      <div className="pl-20">
+      <div className="pl-2 sm:pl-8 md:pl-20">
         {tabs.map(({ id, content }) => (
           <div key={id} style={{ display: activeTab === id ? 'block' : 'none' }}>
             {content}
